@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h2 class="section-title">Your Cart</h2>
+  <form id="cart-form">
+    <div class="table-wrap cart-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Warranty</th> <!-- New column header -->
+            <th>Extend Warranty</th> <!-- New column header -->
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="cart-body">
+          {% for it in items %}
+            <tr data-id="{{ it.product.id }}" data-price="{{ "%.2f"|format(it.product.price) }}">
+              <td>{{ it.product.name }}</td>
+              <td>₹{{ "%.2f"|format(it.product.price) }}</td>
+              <td>
+                <input type="number" class="qty-input"
+                       name="qty_{{ it.product.id }}"
+                       data-id="{{ it.product.id }}"
+                       min="0" value="{{ it.qty }}">
+              </td>
+              <td class="line-total">₹{{ "%.2f"|format(it.line_total) }}</td>
+              <!-- New Warranty Column -->
+              <td>
+                {% if it.product.warranty_years %}
+                  {{ it.product.warranty_years }} year{% if it.product.warranty_years != 1 %}s{% endif %}
+                {% else %}
+                  <span class="muted">No Warranty</span>
+                {% endif %}
+              </td>
+              <!-- New Extend Warranty Column -->
+              <td>
+                {% if it.product.warranty_years %}
+                  <select class="warranty-extend-select" data-product-id="{{ it.product.id }}">
+                    <option value="0" selected>Extend by (yrs)</option>
+                    <option value="1">+1 Year</option>
+                    <option value="2">+2 Years</option>
+                    <option value="3">+3 Years</option>
+                    <!-- Add more options as needed -->
+                  </select>
+                  <!-- Hidden input to store the selected extension value -->
+                  <input type="hidden" name="warranty_extension_{{ it.product.id }}" value="0" class="warranty-extension-value">
+                {% else %}
+                  <span class="muted">N/A</span>
+                {% endif %}
+              </td>
+              <td>
+                <button type="button" class="btn outline remove-btn" data-id="{{ it.product.id }}">❌ Remove</button>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7"><small class="muted">Cart is empty.</small></td></tr> <!-- Updated colspan -->
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="cart-actions">
+        <div class="subtotal">
+          <strong>Subtotal:</strong> ₹<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span>
+        </div>
+        <div>
+          <a class="btn" href="{{ url_for('checkout') }}">Checkout</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+// Debounce helper
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    const ctx = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(ctx, args), wait);
+  };
+}
+
+// Utility: format number as fixed 2-decimal string
+function fmt(n) {
+  return Number(n).toFixed(2);
+}
+
+// Safely update the "cart empty" placeholder if no rows remain
+function ensureEmptyPlaceholder() {
+  const tbody = document.getElementById("cart-body");
+  const rows = tbody.querySelectorAll("tr");
+  // count only real product rows (they have data-id)
+  const productRows = Array.from(rows).filter(r => r.dataset && r.dataset.id);
+  if (productRows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><small class="muted">Cart is empty.</small></td></tr>'; // Updated colspan
+  }
+}
+
+// Send single-qty update to server (server accepts form fields like qty_<id>)
+async function sendQtyUpdate(productId, qty) {
+  const formData = new FormData();
+  formData.append(`qty_${productId}`, qty);
+
+  const res = await fetch("{{ url_for('update_cart') }}", {
+    method: "POST",
+    body: formData,
+    credentials: "same-origin"
+  });
+  if (!res.ok) throw new Error("Network response was not ok");
+  return res.json();
+}
+
+// Send remove request (server supports form or JSON)
+async function sendRemove(productId) {
+  const formData = new FormData();
+  formData.append("product_id", productId);
+
+  const res = await fetch("{{ url_for('remove_from_cart') }}", {
+    method: "POST",
+    body: formData,
+    credentials: "same-origin"
+  });
+  if (!res.ok) throw new Error("Network response was not ok");
+  return res.json();
+}
+
+// Handler for qty change (debounced)
+const handleQtyChange = debounce(async function (inputEl) {
+  try {
+    const productId = inputEl.dataset.id;
+    let qty = parseInt(inputEl.value, 10);
+    if (isNaN(qty) || qty < 0) qty = 0;
+    inputEl.value = qty; // enforce non-negative
+
+    // Optimistically update line total locally using data-price
+    const row = inputEl.closest("tr");
+    const price = parseFloat(row.dataset.price || 0);
+    const newLineTotal = (price * qty);
+    row.querySelector('.line-total').textContent = '₹' + fmt(newLineTotal);
+
+    // Send update to server
+    const data = await sendQtyUpdate(productId, qty);
+    if (data && data.success) {
+      // Update subtotal using server value (authoritative)
+      const subtotalEl = document.querySelector("#subtotal");
+      subtotalEl.textContent = fmt(data.subtotal || 0);
+
+      // If qty is 0 and server accepted removal, remove the row
+      if (qty === 0) {
+        // Small delay for smoothness
+        setTimeout(() => {
+          row.remove();
+          ensureEmptyPlaceholder();
+        }, 150);
+      }
+    } else {
+      // revert or inform user
+      alert("Failed to update cart on server.");
+      // Optionally you could reload to keep things consistent:
+      // location.reload();
+    }
+  } catch (err) {
+    console.error("Auto-update error:", err);
+    alert("Network error while updating cart. Please try again.");
+  }
+}, 400); // 400ms debounce
+
+// Handler for warranty extension change
+function handleWarrantyChange(selectEl) {
+  const productId = selectEl.dataset.productId;
+  const selectedValue = parseInt(selectEl.value, 10) || 0;
+  const hiddenInput = selectEl.parentElement.querySelector('.warranty-extension-value');
+  if (hiddenInput) {
+    hiddenInput.value = selectedValue;
+  }
+  console.log(`Warranty extension selected for product ${productId}: +${selectedValue} years`);
+  // Send an AJAX request to update the session/cart with the extension value
+  sendWarrantyExtensionUpdate(productId, selectedValue);
+}
+
+// Send warranty extension update to server
+async function sendWarrantyExtensionUpdate(productId, extensionYears) {
+    const formData = new FormData();
+    formData.append(`warranty_extension_${productId}`, extensionYears);
+
+    try {
+        const res = await fetch("{{ url_for('update_cart') }}", { // Reuse update_cart
+            method: "POST",
+            body: formData,
+            credentials: "same-origin"
+        });
+        if (!res.ok) {
+            throw new Error(`Network response was not ok: ${res.status}`);
+        }
+        const data = await res.json();
+        if (!data.success) {
+            throw new Error(`Server error: ${data.error || 'Unknown error'}`);
+        }
+        console.log(`Warranty extension for product ${productId} updated to +${extensionYears} years on server.`);
+    } catch (err) {
+        console.error("Warranty extension update error:", err);
+        // Optionally, revert the select value or show an alert
+        alert(`Failed to update warranty extension: ${err.message}. Changes might not be saved.`);
+    }
+}
+
+
+// Event delegation: listen on tbody for qty input changes, remove button clicks, and warranty select changes
+document.getElementById("cart-body").addEventListener("input", function (e) {
+  // handle number input as user types
+  const target = e.target;
+  if (target.matches(".qty-input")) {
+    handleQtyChange(target);
+  }
+});
+
+document.getElementById("cart-body").addEventListener("change", function (e) {
+  const target = e.target;
+  // Handle qty change (e.g., when user uses spinner or finishes editing)
+  if (target.matches(".qty-input")) {
+    handleQtyChange(target);
+  }
+  // Handle warranty extension change
+  if (target.matches(".warranty-extend-select")) {
+    handleWarrantyChange(target);
+  }
+});
+
+document.getElementById("cart-body").addEventListener("click", async function (e) {
+  const btn = e.target.closest(".remove-btn");
+  if (!btn) return;
+  e.preventDefault();
+
+  const productId = btn.dataset.id;
+  if (!productId) return;
+
+  // optional: confirm
+  if (!confirm("Remove this item from the cart?")) return;
+
+  try {
+    const data = await sendRemove(productId);
+    if (data && data.success) {
+      const row = document.querySelector(`tr[data-id='${productId}']`);
+      if (row) row.remove();
+
+      // update subtotal
+      const subtotalEl = document.querySelector("#subtotal");
+      subtotalEl.textContent = fmt(data.subtotal || 0);
+
+      ensureEmptyPlaceholder();
+    } else {
+      alert("Failed to remove item from cart.");
+    }
+  } catch (err) {
+    console.error("Remove error:", err);
+    alert("Network error while removing item. Please try again.");
+  }
+});
+</script>
+
+<style>
+  /* Optional: Add some basic styling for the warranty select */
+  .warranty-extend-select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid var(--outline);
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  .warranty-extend-select:focus {
+    outline: none;
+    border-color: var(--brand);
+  }
+</style>
+{% endblock %}

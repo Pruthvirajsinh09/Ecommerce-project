@@ -1,0 +1,774 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container payment-gateway-wrapper">
+  <!-- Payment Gateway Header -->
+  <div class="gateway-header">
+    <div class="gateway-brand">
+      <div class="brand-logo">💳</div>
+      <h1>Secure Payment Portal</h1>
+    </div>
+    <div class="security-badge">
+      <span class="secure-icon">🔒</span>
+      <span>Secure SSL Encryption</span>
+    </div>
+  </div>
+
+  <div class="payment-gateway-container">
+    <!-- Left Panel: Order Details -->
+    <div class="payment-left-panel">
+      <!-- Merchant Info -->
+      <div class="merchant-info">
+        <div class="merchant-logo">🛒</div>
+        <div class="merchant-details">
+          <h3>E-Commerce Store</h3>
+          <p class="merchant-id">Merchant ID: MCH-{{ "%06d" | format(range(1, 999999)|random) }}</p>
+        </div>
+      </div>
+
+      <!-- Transaction Details -->
+      <div class="transaction-details">
+        <h4><i class="icon-receipt"></i> Transaction Details</h4>
+        
+        <div class="detail-row">
+          <span class="detail-label">Transaction ID:</span>
+          <span class="detail-value">TXN-{{ "%08d" | format(range(1, 99999999)|random) }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Date & Time:</span>
+          <span class="detail-value" id="current-datetime">{{ now|default('2023-12-01 14:30:00') }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Payment Method:</span>
+          <span class="detail-value">Credit/Debit Card</span>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary-card">
+        <h4><i class="icon-cart"></i> Order Summary</h4>
+        
+        <div class="order-items-summary">
+          {% set items_list = payment.get('items', []) %}
+          {% if items_list %}
+            {% for it in items_list %}
+              <div class="order-item">
+                <div class="item-name">{{ it.get('product', {}).get('name', 'Unknown Product') }}</div>
+                <div class="item-qty">Qty: {{ it.get('qty', 0) }}</div>
+                <div class="item-price">₹{{ it.get('line_total', '0.00') }}</div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="order-item"><em>No items in order</em></div>
+          {% endif %}
+        </div>
+        
+        <div class="order-total">
+          <div class="total-label">Total Amount</div>
+          <div class="total-amount">₹{{ payment.get('subtotal', '0.00') }}</div>
+        </div>
+      </div>
+
+      <!-- Customer Info -->
+      <div class="customer-info-card">
+        <h4><i class="icon-user"></i> Billing Information</h4>
+        <div class="customer-detail">
+          <label>Name:</label>
+          <p>{{ payment.customer.get('name', 'N/A') }}</p>
+        </div>
+        <div class="customer-detail">
+          <label>Email:</label>
+          <p>{{ payment.customer.get('email', 'N/A') }}</p>
+        </div>
+        <div class="customer-detail">
+          <label>Address:</label>
+          <p>{{ payment.customer.get('address', 'N/A') }}</p>
+        </div>
+        <div class="customer-detail">
+          <label>City:</label>
+          <p>{{ payment.customer.get('city', 'N/A') }}, {{ payment.customer.get('state', 'N/A') }} - {{ payment.customer.get('pincode', 'N/A') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Payment Interface -->
+    <div class="payment-right-panel">
+      <!-- Payment Amount Display -->
+      <div class="payment-amount-display">
+        <div class="amount-label">Amount to Pay</div>
+        <div class="amount-value">₹{{ payment.get('subtotal', '0.00') }}</div>
+        <div class="currency-info">INR - Indian Rupee</div>
+      </div>
+
+      <!-- Payment Method Selection (Mock) -->
+      <div class="payment-methods">
+        <h4>Select Payment Method</h4>
+        <div class="method-options">
+          <div class="method-option active">
+            <div class="method-icon">💳</div>
+            <div class="method-name">Credit/Debit Card</div>
+          </div>
+          <div class="method-option">
+            <div class="method-icon">🏦</div>
+            <div class="method-name">Net Banking</div>
+          </div>
+          <div class="method-option">
+            <div class="method-icon">📱</div>
+            <div class="method-name">UPI</div>
+          </div>
+          <div class="method-option">
+            <div class="method-icon">💼</div>
+            <div class="method-name">Wallet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Details Form (Mock - Non Functional) -->
+      <div class="card-details-form">
+        <h4>Card Details</h4>
+        <div class="form-group">
+          <label for="cardNumber">Card Number</label>
+          <div class="input-with-icon">
+            <span class="input-icon">💳</span>
+            <input type="text" id="cardNumber" value="•••• •••• •••• 4242" readonly class="mock-input">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expiryDate">Expiry Date</label>
+            <input type="text" id="expiryDate" value="MM/YY" readonly class="mock-input">
+          </div>
+          <div class="form-group">
+            <label for="cvv">CVV</label>
+            <input type="text" id="cvv" value="•••" readonly class="mock-input">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="cardName">Name on Card</label>
+          <input type="text" id="cardName" value="JOHN DOE" readonly class="mock-input">
+        </div>
+      </div>
+
+      <!-- Security Features -->
+      <div class="security-features">
+        <div class="security-item">
+          <span class="security-icon">🔒</span>
+          <span>PCI DSS Compliant</span>
+        </div>
+        <div class="security-item">
+          <span class="security-icon">🛡️</span>
+          <span>Fraud Protection</span>
+        </div>
+        <div class="security-item">
+          <span class="security-icon">✓</span>
+          <span>3D Secure</span>
+        </div>
+      </div>
+
+      <!-- Payment Action Buttons -->
+      <div class="payment-action-buttons">
+        <form method="post" action="{{ url_for('mock_gateway_complete', token=token) }}" class="payment-form">
+          <button type="submit" class="btn-pay-now">
+            <span class="btn-icon">✅</span>
+            <span class="btn-text">Pay ₹{{ payment.get('subtotal', '0.00') }}</span>
+          </button>
+        </form>
+        
+        <div class="secondary-actions">
+          <a href="{{ url_for('checkout') }}" class="btn-secondary">
+            <span class="btn-icon">✏️</span>
+            Edit Details
+          </a>
+          
+          <a href="{{ url_for('cart') }}" class="btn-secondary btn-cancel">
+            <span class="btn-icon">❌</span>
+            Cancel Payment
+          </a>
+        </div>
+      </div>
+
+      <!-- Gateway Footer -->
+      <div class="gateway-footer">
+        <p class="disclaimer">
+          <strong>Disclaimer:</strong> This is a mock payment gateway for demonstration purposes only. 
+          No actual transaction will be processed, and no money will be transferred.
+        </p>
+        
+        <div class="accepted-cards">
+          <span>Accepted Cards:</span>
+          <div class="card-icons">
+            <span class="card-icon">VISA</span>
+            <span class="card-icon">MasterCard</span>
+            <span class="card-icon">RuPay</span>
+            <span class="card-icon">AMEX</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Processing Animation (Hidden by default) -->
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="processing-content">
+      <div class="processing-spinner"></div>
+      <h3>Processing Payment</h3>
+      <p>Please wait while we process your transaction...</p>
+      <p class="processing-note">Do not refresh or close this window</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.payment-gateway-wrapper {
+  max-width: 1200px;
+  margin: 2rem auto;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #333;
+}
+
+/* Header Styles */
+.gateway-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.gateway-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gateway-brand h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #e8f5e9;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.secure-icon {
+  font-size: 1.2rem;
+}
+
+/* Main Container */
+.payment-gateway-container {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* Left Panel Styles */
+.payment-left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.merchant-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.merchant-logo {
+  font-size: 2rem;
+  background: #f0f0f0;
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.merchant-details h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+}
+
+.merchant-id {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.transaction-details, .order-summary-card, .customer-info-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.transaction-details h4, .order-summary-card h4, .customer-info-card h4 {
+  margin-top: 0;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-label {
+  color: #7f8c8d;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+/* Order Items */
+.order-items-summary {
+  margin: 1rem 0;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.item-name {
+  flex: 2;
+}
+
+.item-qty {
+  flex: 1;
+  text-align: center;
+  color: #7f8c8d;
+}
+
+.item-price {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0 0 0;
+  margin-top: 1rem;
+  border-top: 2px solid #2c3e50;
+}
+
+.total-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.total-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #28a745;
+}
+
+/* Customer Info */
+.customer-detail {
+  margin: 1rem 0;
+}
+
+.customer-detail label {
+  display: block;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.customer-detail p {
+  margin: 0;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+/* Right Panel Styles */
+.payment-right-panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+.payment-amount-display {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 10px;
+  margin-bottom: 2rem;
+}
+
+.amount-label {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+}
+
+.amount-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0.5rem 0;
+}
+
+.currency-info {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+/* Payment Methods */
+.payment-methods {
+  margin-bottom: 2rem;
+}
+
+.payment-methods h4 {
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.method-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.method-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.method-option.active {
+  border-color: #4CAF50;
+  background-color: #f1f8e9;
+}
+
+.method-option:hover {
+  border-color: #bdbdbd;
+}
+
+.method-icon {
+  font-size: 1.5rem;
+}
+
+.method-name {
+  font-weight: 500;
+}
+
+/* Card Details Form */
+.card-details-form {
+  margin: 2rem 0;
+}
+
+.card-details-form h4 {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+}
+
+.mock-input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 3rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  color: #666;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Security Features */
+.security-features {
+  display: flex;
+  justify-content: space-around;
+  margin: 2rem 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.security-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.security-icon {
+  font-size: 1.2rem;
+}
+
+/* Payment Action Buttons */
+.payment-action-buttons {
+  margin: 2rem 0;
+}
+
+.btn-pay-now {
+  width: 100%;
+  padding: 1.2rem;
+  background: linear-gradient(to right, #4CAF50, #2E7D32);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.btn-pay-now:hover {
+  background: linear-gradient(to right, #43A047, #1B5E20);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.secondary-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  color: #555;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #bdbdbd;
+}
+
+.btn-cancel {
+  color: #f44336;
+  border-color: #ffcdd2;
+}
+
+/* Gateway Footer */
+.gateway-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.disclaimer {
+  font-size: 0.85rem;
+  color: #777;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.accepted-cards {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-icons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.card-icon {
+  padding: 0.3rem 0.8rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Processing Overlay */
+.processing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.processing-content {
+  text-align: center;
+  max-width: 400px;
+  padding: 3rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+}
+
+.processing-spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #4CAF50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 2rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.processing-note {
+  font-size: 0.9rem;
+  color: #f44336;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .payment-gateway-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .gateway-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .method-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .secondary-actions {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+// Add interactivity to payment methods
+document.addEventListener('DOMContentLoaded', function() {
+  // Set current date and time
+  const now = new Date();
+  const dateTimeStr = now.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  document.getElementById('current-datetime').textContent = dateTimeStr;
+  
+  // Payment method selection
+  const methodOptions = document.querySelectorAll('.method-option');
+  methodOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      methodOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+  
+  // Simulate processing on payment button click
+  const payButton = document.querySelector('.btn-pay-now');
+  const processingOverlay = document.getElementById('processingOverlay');
+  
+  payButton.addEventListener('click', function(e) {
+    // Show processing overlay
+    processingOverlay.style.display = 'flex';
+    
+    // In a real scenario, this would be where the payment is processed
+    // For mock purposes, the form will submit normally after showing the overlay
+  });
+});
+</script>
+{% endblock %}

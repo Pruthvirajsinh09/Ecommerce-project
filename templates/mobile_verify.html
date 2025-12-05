@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .content {
+      padding: 20px;
+    }
+    #video-container {
+      width: 100%;
+      margin: 20px 0;
+    }
+    #video {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .message {
+      text-align: center;
+      margin: 20px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .error {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    .success {
+      background-color: #e8f5e8;
+      color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Face Verification</h1>
+    </div>
+    
+    <div class="content">
+      {% if error %}
+        <div class="message error">
+          <p>{{ error }}</p>
+        </div>
+      {% else %}
+        <p>Please allow camera access and position your face in the frame.</p>
+        
+        <div id="video-container">
+          <video id="video" autoplay playsinline></video>
+        </div>
+        
+        <div class="controls">
+          <button id="capture-btn" disabled>Capture Face</button>
+        </div>
+        
+        <div id="message"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const captureBtn = document.getElementById('capture-btn');
+    const messageDiv = document.getElementById('message');
+    const token = "{{ token }}";
+    
+    // Access the camera
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "user" },
+          audio: false 
+        });
+        video.srcObject = stream;
+        
+        // Enable capture button after camera starts
+        captureBtn.disabled = false;
+      } catch (err) {
+        messageDiv.innerHTML = `<div class="message error">
+          <p>Camera access denied: ${err.message}</p>
+        </div>`;
+        console.error("Error accessing camera:", err);
+      }
+    }
+    
+    // Capture image from video
+    function captureImage() {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to base64
+      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Disable button during processing
+      captureBtn.disabled = true;
+      messageDiv.innerHTML = `<div class="message">
+        <p>Verifying face...</p>
+      </div>`;
+      
+      // Send to server for verification
+      fetch('/api/verify-face', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          image: imageData
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          messageDiv.innerHTML = `<div class="message success">
+            <p>Face verified successfully! You can now close this page.</p>
+          </div>`;
+        } else {
+          messageDiv.innerHTML = `<div class="message error">
+            <p>Face verification failed: ${data.error}</p>
+          </div>`;
+          // Re-enable button for retry
+          captureBtn.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        messageDiv.innerHTML = `<div class="message error">
+          <p>Verification failed: ${error.message}</p>
+        </div>`;
+        captureBtn.disabled = false;
+      });
+    }
+    
+    // Event listeners
+    captureBtn.addEventListener('click', captureImage);
+    
+    // Start camera when page loads
+    window.addEventListener('load', startCamera);
+  </script>
+</body>
+</html>

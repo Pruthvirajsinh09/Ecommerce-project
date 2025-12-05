@@ -1,0 +1,12 @@
+Flask==3.0.3
+Flask-Mail==0.9.0
+mysql-connector-python==8.4.0
+python-dotenv==1.0.1
+Werkzeug==3.0.3
+opencv-python==4.9.0.80
+numpy==1.26.4
+Pillow>=10.4.0
+face-recognition
+dlib-bin
+redis==5.0.1
+qrcode[pil]==7.4.2

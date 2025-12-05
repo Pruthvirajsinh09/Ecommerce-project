@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="padding:28px 0;max-width:500px;margin:0 auto;">
+  <h2>Verify Identity</h2>
+  <p>Enter the 6-character code sent to your email to update your face.</p>
+
+  <!-- The token is passed from Flask as 'token' -->
+  <form method="POST" action="{{ url_for('profile_face_verify_otp') }}">
+    <!-- ✅ Hidden field so token is sent with the POST -->
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <div style="margin:16px 0;">
+      <input type="text" name="code" maxlength="6" 
+             style="width:100%;padding:10px;border:1px solid var(--outline);border-radius:8px;font-size:18px;text-align:center;"
+             placeholder="Enter code" required autofocus>
+    </div>
+
+    <button type="submit" class="btn" style="width:100%;">Verify & Update Face</button>
+  </form>
+
+  <div style="margin-top:16px;text-align:center;">
+    <a href="{{ url_for('profile_face_request_otp') }}" class="btn outline" style="display:inline-block;">Resend Code</a>
+    <a href="{{ url_for('profile') }}" style="display:inline-block;margin-left:10px;color:var(--muted);">Cancel</a>
+  </div>
+</div>
+{% endblock %}

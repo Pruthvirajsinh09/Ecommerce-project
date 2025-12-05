@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="success-card">
+    <h2>✅ Order Placed</h2>
+    <p>Order ID: <strong>#{{ order.id }}</strong></p>
+    <p>Placed on: {{ order.created_at }}</p>
+    <div class="table-wrap" style="margin-top:10px">
+      <table>
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+        <tbody>
+         {% for item in items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td class="text-end">
+             {{ item.quantity }} × ₹{{ "%.2f"|format(item.unit_price|float) }}
+           </td>
+           <td class="text-end">
+            ₹{{ "%.2f"|format((item.unit_price * item.quantity)|float) }}
+           </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:10px">Grand Total: <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong></p>
+    <a class="btn" href="{{ url_for('index') }}" style="margin-top:10px;display:inline-block">Continue Shopping</a>
+  </div>
+</div>
+{% endblock %}

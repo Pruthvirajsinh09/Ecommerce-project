@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Claim Warranty{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-shield-alt me-2"></i> Warranty Claim
+          </h4>
+        </div>
+        <div class="card-body">
+          {% if product %}
+            <div class="alert alert-info">
+              <h5 class="mb-2">Product Information</h5>
+              <p class="mb-1"><strong>Order ID:</strong> #{{ order_id }}</p>
+              <p class="mb-1"><strong>Product:</strong> {{ product.name }}</p>
+              {% if product.warranty_years %}
+                <p class="mb-0">
+                  <strong>Warranty:</strong> {{ product.warranty_years }} year{{ 's' if product.warranty_years != 1 }}
+                </p>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <form method="POST" id="claimForm">
+            <!-- Hidden token for secure face-verified claims -->
+            {% if warranty_token %}
+              <input type="hidden" name="warranty_token" value="{{ warranty_token }}">
+            {% endif %}
+            <input type="hidden" name="order_id" value="{{ order_id }}">
+            <input type="hidden" name="product_id" value="{{ product.id if product else '' }}">
+
+            <div class="mb-4">
+              <label for="reason" class="form-label">Reason for Claim <span class="text-danger">*</span></label>
+              <textarea 
+                class="form-control" 
+                id="reason" 
+                name="reason" 
+                rows="4" 
+                placeholder="Describe the issue (e.g., 'Screen stopped working after 6 months', 'Battery not holding charge')"
+                required
+              >{{ request.form.reason or '' }}</textarea>
+              <div class="form-text">Be specific. Include when the issue started and what you’ve tried.</div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="claim_date" class="form-label">Claim Date <span class="text-danger">*</span></label>
+                <input 
+                  type="date" 
+                  class="form-control" 
+                  id="claim_date" 
+                  name="claim_date" 
+                  value="{{ request.form.claim_date or default_date }}" 
+                  max="{{ now.date() if now else '' }}" 
+                  required
+                >
+                <div class="form-text">Date when you first noticed the issue.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Current Date</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  value="{{ now.strftime('%Y-%m-%d') if now else '' }}" 
+                  disabled
+                >
+              </div>
+            </div>
+
+            <div class="alert alert-warning d-flex align-items-center">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <div>
+                <strong>Important:</strong> False claims may result in warranty voidance.
+                {% if warranty_token %}
+                  <br><i class="fas fa-check-circle text-success me-1"></i>
+                  <small>Your identity has been verified via facial recognition.</small>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-success px-4">
+                <i class="fas fa-paper-plane me-1"></i> Submit Claim
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="card-footer text-muted small">
+          <p class="mb-0">
+            <i class="fas fa-lock me-1"></i> All claims are logged and verified. 
+            Admin will review and contact you within 2 business days.
+          </p>
+        </div>
+      </div>
+
+      {% if not warranty_token %}
+        <div class="mt-4 alert alert-info">
+          <h5><i class="fas fa-info-circle me-2"></i> Security Notice</h5>
+          <p class="mb-0">
+            For enhanced security, future versions will require facial verification to submit warranty claims — 
+            just like during checkout and login.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Optional: Font Awesome (if not in base.html) -->
+{% if not request.cookies.get('fa_loaded') %}
+  <script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
+  <script>
+    document.cookie = "fa_loaded=1; path=/; max-age=86400";
+  </script>
+{% endif %}
+
+<script>
+  // Auto-set claim_date to today if empty
+  document.addEventListener('DOMContentLoaded', () => {
+    const dateInput = document.getElementById('claim_date');
+    if (!dateInput.value) {
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+    }
+  });
+</script>
+{% endblock %}

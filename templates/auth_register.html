@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width:560px">
+  <h2 class="section-title">Create Account</h2>
+
+  <input type="hidden" id="captured_image" name="captured_image">
+
+  <form id="register-form" method="post">
+    <label>Full name<input type="text" name="name" required></label>
+    <label>Email<input type="email" name="email" required></label>
+    <label>Password<input type="password" name="password"></label>
+
+    <div id="camera-section" style="display:none; margin-top:20px; text-align:center;">
+      <h5>Look at the camera — position your face</h5>
+      <video id="video" width="320" height="240" autoplay playsinline style="border:1px solid #ccc; border-radius:8px;"></video>
+      <br><br>
+      <button type="button" id="capture-btn" class="btn">✅ Capture & Register</button>
+    </div>
+
+    <button type="button" id="register-btn" class="btn">Register (Capture Face)</button>
+  </form>
+</div>
+
+<script>
+document.getElementById('register-btn').addEventListener('click', async () => {
+    const video = document.getElementById('video');
+    const cameraSection = document.getElementById('camera-section');
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+        cameraSection.style.display = 'block';
+        document.getElementById('register-btn').style.display = 'none';
+    } catch (err) {
+        alert('Camera access denied: ' + (err.message || 'Permission blocked'));
+    }
+});
+
+document.getElementById('capture-btn').addEventListener('click', () => {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg');
+    document.getElementById('captured_image').value = dataUrl;
+
+    // Stop camera
+    const stream = video.srcObject;
+    if (stream) stream.getTracks().forEach(t => t.stop());
+
+    // Submit form
+    document.getElementById('register-form').submit();
+});
+</script>
+{% endblock %}

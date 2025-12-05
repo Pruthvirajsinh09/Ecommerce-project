@@ -1,0 +1,1103 @@
+import os
+import pickle
+import time
+import base64
+import secrets
+from decimal import Decimal
+from datetime import datetime, timedelta
+from functools import wraps
+from io import BytesIO
+from flask import (
+    Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, jsonify
+)
+from flask_mail import Mail, Message
+import mysql.connector
+from mysql.connector import pooling, Error
+from werkzeug.security import generate_password_hash, check_password_hash
+# Biometric libs (webcam / processing)
+import cv2
+import numpy as np
+import face_recognition
+
+import smtplib
+import socket
+from email.message import EmailMessage
+from email.header import Header
+from email.utils import formataddr
+
+
+# ========== REMOVE .ENV — HARD CODE CONFIG FOR LAN ==========
+# ⚠️ WARNING: Do NOT use hardcoded secrets in production!
+app = Flask(__name__)
+# --- SECRET KEY (Hardcoded for LAN Dev) ---
+app.secret_key = "your-super-secret-key-for-lan-dev-12345"  # CHANGE THIS IF YOU WANT
+
+# --- EMAIL CONFIG (Optional — Disabled by default for LAN) ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'rtobvn8191@gmail.com'  # Set to your email if you want email features
+app.config['MAIL_PASSWORD'] = 'udxzckxybkkmqxfa'  # Set to your app password
+app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
+
+# Initialize Mail with error handling (won't crash if email not configured)
+try:
+    mail = Mail(app)
+except Exception as e:
+    print(f"Warning: Could not initialize email service: {e}")
+
+# --- UPLOAD FOLDER ---
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads", "faces")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# --- VERIFICATION TOKENS (In-memory) ---
+MOBILE_VERIFICATION_TOKENS = {}
+EMAIL_VERIFICATION_TOKENS = {}  # <-- NEW for registration
+
+# --- MYSQL CONFIG (Hardcoded for LAN) ---
+dbconfig = {
+    "host": "127.0.0.1",
+    #"port": 3306,                # ✅ Added
+    "user": "root",
+    "password": "",
+    "database": "ecommerce_db",
+}
+pool = None 
+
+def init_pool():
+    global pool
+    if pool is None:
+        pool = pooling.MySQLConnectionPool(
+            pool_name="mypool", pool_size=5, connection_timeout=6, **dbconfig
+        )
+
+def get_db():
+    global pool
+    if pool is None:
+        init_pool()
+    return pool.get_connection()
+
+# --- DB HELPERS ---
+def fetchall(query, params=None):
+    conn = get_db()
+    try:
+        cur = conn.cursor(dictionary=True)
+        cur.execute(query, params or ())
+        rows = cur.fetchall()
+        cur.close()
+        return rows
+    finally:
+        conn.close()
+
+def fetchone(query, params=None):
+    rows = fetchall(query, params)
+    return rows[0] if rows else None
+
+def execute(query, params=None):
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(query, params or ())
+        conn.commit()
+        last_id = cur.lastrowid
+        cur.close()
+        return last_id
+    finally:
+        conn.close()
+
+# --- AUTH HELPERS ---
+def current_user():
+    uid = session.get("user_id")
+    if not uid:
+        return None
+    return fetchone("SELECT id,name,email,is_admin,face_image,email_verified FROM users WHERE id=%s", (uid,))
+
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Please login to continue.", "warning")
+            return redirect(url_for("login", next=request.path))
+        return fn(*args, **kwargs)
+    return wrapper
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user or not user["is_admin"]:
+            abort(403)
+        return fn(*args, **kwargs)
+    return wrapper
+
+# --- CART HELPERS ---
+def cart_init():
+    if "cart" not in session:
+        session["cart"] = {}
+        session.modified = True
+
+def cart_items():
+    cart_init()
+    if not session["cart"]:
+        return [], Decimal("0.00")
+    ids = list(map(int, session["cart"].keys()))
+    placeholders = ",".join(["%s"] * len(ids))
+    products = fetchall(
+        f"SELECT p.*, "
+        f"CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url "
+        f"FROM products p WHERE p.id IN ({placeholders})",
+        ids
+    )
+    items = []
+    subtotal = Decimal("0.00")
+    for p in products:
+        qty = int(session["cart"].get(str(p["id"]), 0))
+        line_total = Decimal(str(p["price"])) * qty
+        items.append({"product": p, "qty": qty, "line_total": line_total})
+        subtotal += line_total
+    return items, subtotal
+
+# --- EMAIL HELPERS (Gracefully disabled if no credentials) ---
+def send_email(to, subject, template, **kwargs):
+    try:
+        # Skip if email not configured
+        if not app.config.get('MAIL_USERNAME') or not app.config.get('MAIL_PASSWORD'):
+            app.logger.warning("Email not configured - skipping send.")
+            return False
+        if isinstance(to, str):
+            if "@" not in to or "." not in to.split("@")[1]:
+                app.logger.error(f"Invalid email format: {to}")
+                return False
+        msg = Message(
+            subject=subject,
+            recipients=[to] if isinstance(to, str) else to,
+            html=render_template(f"emails/{template}.html", **kwargs),
+            sender=app.config['MAIL_DEFAULT_SENDER']
+        )
+        mail.send(msg)
+        app.logger.info(f"Email sent to {to}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send email to {to}: {str(e)}")
+        return False
+
+def send_mobile_verification_email(user_email, user_name, token):
+    return send_email(
+        to=user_email,
+        subject="Mobile Face Verification - Complete Setup",
+        template="mobile_verification",
+        user_name=user_name,
+        verification_url=url_for('mobile_verify', token=token, _external=True)
+    )
+
+@app.context_processor
+def inject_now():
+    return {"year": datetime.now().year, "me": current_user()}
+
+# --- FACE HELPERS ---
+def _save_face_image_bytes(uid, bgr_image):
+    filename = f"user_{uid}.jpg"
+    path = os.path.join(UPLOAD_FOLDER, filename)
+    try:
+        cv2.imwrite(path, bgr_image)
+        rel = f"/static/uploads/faces/{filename}"
+        return rel
+    except Exception as e:
+        app.logger.exception("Failed to write face image: %s", e)
+        return None
+
+def _decode_base64_image(data_url):
+    if not data_url:
+        return None, "No image data"
+    if "," in data_url:
+        header, encoded = data_url.split(",", 1)
+    else:
+        encoded = data_url
+    try:
+        img_bytes = base64.b64decode(encoded)
+        nparr = np.frombuffer(img_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img is None:
+            return None, "Cannot decode image"
+        return img, None
+    except Exception as e:
+        return None, f"Decode error: {e}"
+
+def _face_encoding_from_bgr_image(bgr_image):
+    try:
+        rgb = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+        boxes = face_recognition.face_locations(rgb, model="hog")
+        if not boxes:
+            return None, None, "No face detected"
+        if len(boxes) > 1:
+            areas = [(b[2]-b[0])*(b[1]-b[3]) for b in boxes]
+            idx = int(np.argmax(areas))
+            boxes = [boxes[idx]]
+        encs = face_recognition.face_encodings(rgb, boxes)
+        if not encs:
+            return None, None, "No face encoding produced"
+        enc = encs[0]
+        enc_bytes = pickle.dumps(np.asarray(enc, dtype=np.float32))
+        (top, right, bottom, left) = boxes[0]
+        cropped = bgr_image[top:bottom, left:right].copy()
+        if cropped.size == 0:
+            cropped = bgr_image.copy()
+        return enc_bytes, cropped, None
+    except Exception as e:
+        app.logger.exception("Face encoding error: %s", e)
+        return None, None, f"Face error: {e}"
+
+# --- WEBCAM CAPTURE (SERVER-SIDE) ---
+def capture_face_encoding_server(timeout_sec=20, window_title="Face verification"):
+    try:
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    except Exception:
+        cap = cv2.VideoCapture(0)
+    if not cap or not cap.isOpened():
+        return None, None, "Cannot access webcam"
+    start = time.time()
+    encoding = None
+    face_img = None
+    err = None
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_title, 640, 420)
+    try:
+        while time.time() - start < timeout_sec:
+            ok, frame = cap.read()
+            if not ok:
+                err = "Failed to read from webcam"
+                break
+            rgb_small = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
+            rgb = cv2.cvtColor(rgb_small, cv2.COLOR_BGR2RGB)
+            boxes = face_recognition.face_locations(rgb, model="hog")
+            cv2.putText(frame, "Align face. Press 'q' to cancel.", (10,28),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+            for (t, r, b, l) in boxes:
+                cv2.rectangle(frame, (l*2, t*2), (r*2, b*2), (0,200,255), 2)
+            cv2.imshow(window_title, frame)
+            if (cv2.waitKey(1) & 0xFF) == ord('q'):
+                err = "Cancelled by user"
+                break
+            if len(boxes) == 1:
+                rgb_full = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                encs = face_recognition.face_encodings(rgb_full)
+                if encs:
+                    encoding = encs[0]
+                    full_boxes = face_recognition.face_locations(rgb_full, model="hog")
+                    if full_boxes:
+                        (t, r, b, l) = full_boxes[0]
+                        face_img = frame[t:b, l:r].copy()
+                    else:
+                        face_img = frame.copy()
+                    break
+        if encoding is None and err is None:
+            err = "No single face detected (timeout)"
+    finally:
+        try:
+            cap.release()
+        except Exception:
+            pass
+        try:
+            cv2.destroyWindow(window_title)
+        except Exception:
+            pass
+    if encoding is None:
+        return None, None, err or "Failed to capture face"
+    enc_bytes = pickle.dumps(np.asarray(encoding, dtype=np.float32))
+    return enc_bytes, face_img, None
+
+def enc_distance(enc_bytes_a, enc_bytes_b):
+    a = pickle.loads(enc_bytes_a)
+    b = pickle.loads(enc_bytes_b)
+    return float(np.linalg.norm(a - b))
+
+# --- NEW: Email Verification Route ---
+@app.route("/verify-email/<token>")
+def verify_email(token):
+    if token not in EMAIL_VERIFICATION_TOKENS:
+        flash("Invalid or expired verification link.", "danger")
+        return redirect(url_for("register"))
+    
+    data = EMAIL_VERIFICATION_TOKENS[token]
+    if time.time() - data["timestamp"] > 3600:  # 1 hour expiry
+        del EMAIL_VERIFICATION_TOKENS[token]
+        flash("Verification link expired. Please register again.", "warning")
+        return redirect(url_for("register"))
+    
+    try:
+        uid = execute(
+            "INSERT INTO users (name, email, password_hash, email_verified) VALUES (%s,%s,%s,1)",
+            (data["name"], data["email"], data["password_hash"])
+        )
+        session["pending_profile_user_id"] = uid
+        session.modified = True
+        del EMAIL_VERIFICATION_TOKENS[token]
+        flash("Email verified! Please complete your profile.", "success")
+        return redirect(url_for("complete_profile"))
+    except Exception as e:
+        app.logger.error(f"User creation failed after email verification: {e}")
+        flash("An error occurred during registration. Please try again.", "danger")
+        return redirect(url_for("register"))
+
+# --- ROUTES ---
+# Serve product images from BLOB
+@app.route("/product-image/<int:pid>")
+def product_image(pid):
+    row = fetchone("SELECT image_blob, image_mimetype FROM products WHERE id=%s", (pid,))
+    if not row or not row["image_blob"]:
+        abort(404)
+    blob = row["image_blob"]
+    mimetype = row.get("image_mimetype") or "image/jpeg"
+    return send_file(BytesIO(blob), mimetype=mimetype)
+
+# Mobile Verification Routes
+@app.route("/api/generate-verification-token", methods=["POST"])
+def generate_verification_token():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data received"}), 400
+        email = data.get("email")
+        if not email:
+            return jsonify({"success": False, "error": "Email is required"}), 400
+        if "@" not in email or "." not in email.split("@")[1]:
+            return jsonify({"success": False, "error": "Invalid email format"}), 400
+        user = fetchone("SELECT * FROM users WHERE email=%s", (email,))
+        if not user:
+            return jsonify({"success": False, "error": "User not found"}), 404
+        token = secrets.token_urlsafe(32)
+        verification_data = {
+            "email": email,
+            "user_id": user["id"],
+            "timestamp": time.time(),
+            "status": "pending"
+        }
+        MOBILE_VERIFICATION_TOKENS[token] = verification_data
+        if send_mobile_verification_email(email, user["name"], token):
+            return jsonify({
+                "success": True, 
+                "token": token,
+                "verification_url": url_for('mobile_verify', token=token, _external=True)
+            })
+        else:
+            del MOBILE_VERIFICATION_TOKENS[token]
+            return jsonify({"success": False, "error": "Failed to send email"}), 500
+    except Exception as e:
+        app.logger.error(f"Error: {str(e)}")
+        return jsonify({"success": False, "error": "Internal error"}), 500
+
+@app.route("/mobile-verify/<token>")
+def mobile_verify(token):
+    try:
+        if token not in MOBILE_VERIFICATION_TOKENS:
+            return render_template("mobile_verify.html", error="Invalid token")
+        verification_data = MOBILE_VERIFICATION_TOKENS[token]
+        if verification_data["status"] != "pending":
+            return render_template("mobile_verify.html", error="Already completed")
+        return render_template("mobile_verify.html", token=token, email=verification_data["email"])
+    except Exception as e:
+        app.logger.error(f"Error: {str(e)}")
+        return render_template("mobile_verify.html", error="An error occurred")
+
+@app.route("/api/verify-face", methods=["POST"])
+def verify_face():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data"}), 400
+        token = data.get("token")
+        captured_image = data.get("image")
+        if not token or not captured_image:
+            return jsonify({"success": False, "error": "Token and image required"}), 400
+        if token not in MOBILE_VERIFICATION_TOKENS:
+            return jsonify({"success": False, "error": "Invalid token"}), 400
+        verification_data = MOBILE_VERIFICATION_TOKENS[token]
+        if verification_data["status"] != "pending":
+            return jsonify({"success": False, "error": "Already completed"}), 400
+        img_bgr, err = _decode_base64_image(captured_image)
+        if img_bgr is None:
+            return jsonify({"success": False, "error": f"Decode failed: {err}"}), 400
+        user = fetchone("SELECT face_encoding FROM users WHERE id=%s", (verification_data["user_id"],))
+        if not user or not user.get("face_encoding"):
+            return jsonify({"success": False, "error": "No face registered"}), 400
+        live_enc_bytes, _, err = _face_encoding_from_bgr_image(img_bgr)
+        if live_enc_bytes is None:
+            return jsonify({"success": False, "error": f"Face detection: {err}"}), 400
+        dist = enc_distance(live_enc_bytes, user["face_encoding"])
+        if dist > 0.55:
+            verification_data["status"] = "failed"
+            verification_data["distance"] = dist
+            return jsonify({"success": False, "error": "Face mismatch", "distance": dist}), 401
+        verification_data["status"] = "success"
+        verification_data["distance"] = dist
+        return jsonify({"success": True, "message": "Verified", "distance": dist})
+    except Exception as e:
+        app.logger.error(f"Error: {str(e)}")
+        return jsonify({"success": False, "error": "Internal error"}), 500
+
+@app.route("/api/check-verification-status/<token>")
+def check_verification_status(token):
+    try:
+        if token not in MOBILE_VERIFICATION_TOKENS:
+            return jsonify({"status": "expired"})
+        status = MOBILE_VERIFICATION_TOKENS[token]["status"]
+        if status == "success":
+            user_id = MOBILE_VERIFICATION_TOKENS[token]["user_id"]
+            session["user_id"] = user_id
+            session.modified = True
+            del MOBILE_VERIFICATION_TOKENS[token]
+            return jsonify({"status": "success", "redirect_url": url_for("index")})
+        elif status == "failed":
+            del MOBILE_VERIFICATION_TOKENS[token]
+            return jsonify({"status": "failed"})
+        else:
+            return jsonify({"status": "pending"})
+    except Exception as e:
+        app.logger.error(f"Error: {str(e)}")
+        return jsonify({"status": "error"})
+
+# Storefront Routes
+@app.route("/")
+def index():
+    featured = fetchall(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p JOIN categories c ON c.id = p.category_id "
+        "ORDER BY p.created_at DESC LIMIT 6"
+    )
+    categories = fetchall("SELECT * FROM categories ORDER BY name")
+    return render_template("index.html", featured=featured, categories=categories)
+
+@app.route("/categories")
+def categories():
+    cats = fetchall("SELECT * FROM categories ORDER BY name")
+    return render_template("categories.html", categories=cats)
+
+@app.route("/category/<slug>")
+def category(slug):
+    cat = fetchone("SELECT * FROM categories WHERE slug=%s", (slug,))
+    if not cat:
+        abort(404)
+    prods = fetchall(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p "
+        "JOIN categories c ON c.id = p.category_id "
+        "WHERE c.slug = %s ORDER BY p.created_at DESC",
+        (slug,),
+    )
+    return render_template("category.html", category=cat, products=prods)
+
+@app.route("/electronics")
+def electronics():
+    return category("electronics")
+
+@app.route("/home-appliances")
+def home_appliances():
+    return category("home-appliances")
+
+@app.route("/search")
+def search():
+    q = request.args.get("q", "").strip()
+    results = []
+    if q:
+        like = f"%{q}%"
+        results = fetchall(
+            "SELECT p.*, "
+            "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+            "c.name AS category_name "
+            "FROM products p "
+            "JOIN categories c ON c.id = p.category_id "
+            "WHERE p.name LIKE %s OR p.description LIKE %s "
+            "ORDER BY p.created_at DESC",
+            (like, like),
+        )
+    return render_template("search.html", q=q, results=results)
+
+# Cart Routes
+@app.route("/add-to-cart/<int:product_id>", methods=["POST"])
+def add_to_cart(product_id):
+    qty = max(1, int(request.form.get("qty", 1)))
+    cart_init()
+    session["cart"][str(product_id)] = session["cart"].get(str(product_id), 0) + qty
+    session.modified = True
+    flash("Added to cart.", "success")
+    return redirect(request.referrer or url_for("index"))
+
+@app.route("/remove_from_cart", methods=["POST"])
+def remove_from_cart():
+    if request.is_json:
+        data = request.get_json()
+        product_id = str(data["product_id"])
+    else:
+        product_id = str(request.form.get("product_id"))
+    cart = session.get("cart", {})
+    cart.pop(product_id, None)
+    session["cart"] = cart
+    session.modified = True
+    items, subtotal = cart_items()
+    return jsonify({"success": True, "subtotal": float(subtotal)})
+
+@app.route("/cart")
+def cart():
+    items, subtotal = cart_items()
+    return render_template("cart.html", items=items, subtotal=subtotal)
+
+@app.route("/update-cart", methods=["POST"])
+def update_cart():
+    cart_init()
+    if request.is_json:
+        data = request.get_json()
+        # Expecting data to include an "items" list of {product_id, qty}
+        for item in data.get("items", []):
+            pid = str(item.get("product_id"))
+            qty = max(0, int(item.get("qty", 0)))
+            if qty == 0 and pid in session["cart"]:
+                session["cart"].pop(pid)
+            elif qty > 0:
+                session["cart"][pid] = qty
+    else:
+        for key, value in request.form.items():
+            if key.startswith("qty_"):
+                pid = key.split("_", 1)[1]
+                qty = max(0, int(value or 0))
+                if qty == 0 and pid in session["cart"]:
+                    session["cart"].pop(pid)
+                elif qty > 0:
+                    session["cart"][pid] = qty
+    session.modified = True
+    items, subtotal = cart_items()
+    return jsonify({"success": True, "subtotal": float(subtotal)})
+
+# Auth Routes — UPDATED FOR EMAIL VERIFICATION
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    pre_name = ""
+    pre_email = ""
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        pre_name = name
+        pre_email = email
+
+        if not name or not email:
+            flash("Name and email are required.", "danger")
+            return render_template("auth_register.html", name=pre_name, email=pre_email)
+
+        exists = fetchone("SELECT id FROM users WHERE email=%s", (email,))
+        if exists:
+            flash("Email already registered.", "warning")
+            return render_template("auth_register.html", name=pre_name, email=pre_email)
+
+        if not password:
+            password = secrets.token_urlsafe(12)
+
+        # Generate verification token
+        token = secrets.token_urlsafe(32)
+        EMAIL_VERIFICATION_TOKENS[token] = {
+            "name": name,
+            "email": email,
+            "password_hash": generate_password_hash(password),
+            "timestamp": time.time(),
+        }
+
+        # Send verification email
+        verification_url = url_for('verify_email', token=token, _external=True)
+        success = send_email(
+            to=email,
+            subject="Verify Your Email – Complete Registration",
+            template="email_verification",
+            user_name=name,
+            verification_url=verification_url
+        )
+
+        if success:
+            flash("A verification link has been sent to your email.", "info")
+        else:
+            del EMAIL_VERIFICATION_TOKENS[token]
+            flash("Failed to send verification email. Please try again.", "danger")
+
+        return redirect(url_for("register"))
+
+    return render_template("auth_register.html", name=pre_name, email=pre_email)
+
+# Complete Profile — NOW CAPTURES FACE
+@app.route("/complete-profile", methods=["GET", "POST"])
+def complete_profile():
+    user_id = session.get("pending_profile_user_id")
+    if not user_id:
+        flash("Access denied.", "danger")
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        mobile = request.form.get("mobile", "").strip()
+        address_line1 = request.form.get("address_line1", "").strip()
+        address_line2 = request.form.get("address_line2", "").strip()
+        city = request.form.get("city", "").strip()
+        state = request.form.get("state", "").strip()
+        pincode = request.form.get("pincode", "").strip()
+        if not all([mobile, address_line1, city, state, pincode]):
+            flash("All fields marked * are required.", "danger")
+            return render_template("complete_profile.html")
+        if not mobile.isdigit() or len(mobile) not in (10, 11, 12, 13):
+            flash("Please enter a valid mobile number (10-13 digits).", "danger")
+            return render_template("complete_profile.html")
+
+        # === CAPTURE FACE HERE ===
+        flash("Please allow webcam access to capture your face for login.", "info")
+        enc_bytes, cropped_bgr, err = capture_face_encoding_server(window_title="Complete Profile: Capture Face")
+        if enc_bytes is None:
+            flash(f"Face capture failed: {err}", "danger")
+            return render_template("complete_profile.html")
+
+        # Update user with profile + face data
+        execute("""
+            UPDATE users 
+            SET mobile=%s, address_line1=%s, address_line2=%s, city=%s, state=%s, pincode=%s, 
+                profile_complete=TRUE, face_encoding=%s
+            WHERE id=%s
+        """, (mobile, address_line1, address_line2, city, state, pincode, enc_bytes, user_id))
+
+        # Save face image (optional)
+        if cropped_bgr is not None:
+            rel_path = _save_face_image_bytes(user_id, cropped_bgr)
+            if rel_path:
+                execute("UPDATE users SET face_image=%s WHERE id=%s", (rel_path, user_id))
+
+        session["user_id"] = user_id
+        session.pop("pending_profile_user_id", None)
+        session.modified = True
+        flash("Profile completed! Welcome to the store!", "success")
+        return redirect(url_for("index"))
+
+    return render_template("complete_profile.html")
+
+# Login — NOW SENDS LOGIN ALERT EMAIL
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        user = fetchone("SELECT * FROM users WHERE email=%s", (email,))
+        if not user or not check_password_hash(user["password_hash"], password):
+            flash("Invalid credentials.", "danger")
+            return render_template("auth_login.html")
+        flash("Verifying your face.", "info")
+        row = fetchone("SELECT face_encoding FROM users WHERE id=%s", (user["id"],))
+        if not row or row["face_encoding"] is None:
+            flash("No face registered.", "danger")
+            return render_template("auth_login.html")
+        live_enc, face_img, err = capture_face_encoding_server(window_title="Login: verify face")
+        if live_enc is None:
+            flash(f"Face verification failed: {err}", "danger")
+            return render_template("auth_login.html")
+        dist = enc_distance(live_enc, row["face_encoding"])
+        if dist > 0.55:
+            flash("Face mismatch. Login blocked.", "danger")
+            return render_template("auth_login.html")
+        
+        session["user_id"] = user["id"]
+        session.modified = True
+
+        # >>> SEND LOGIN ALERT EMAIL <<<
+        send_email(
+            to=user["email"],
+            subject="New Login Detected – Your Account",
+            template="login_alert",
+            user_name=user["name"],
+            login_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        flash("Welcome!", "success")
+        return redirect(request.args.get("next") or url_for("index"))
+    return render_template("auth_login.html")
+
+@app.route("/api/verify-face-login", methods=["POST"])
+def verify_face_login():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data"}), 400
+        email = data.get("email")
+        image_data = data.get("image")
+        if not email or not image_data:
+            return jsonify({"success": False, "error": "Email and image required"}), 400
+        user = fetchone("SELECT id, password_hash, face_encoding FROM users WHERE email=%s", (email,))
+        if not user or not user.get("face_encoding"):
+            return jsonify({"success": False, "error": "No face registered"}), 400
+        img_bgr, err = _decode_base64_image(image_data)
+        if img_bgr is None:
+            return jsonify({"success": False, "error": "Invalid image"}), 400
+        live_enc_bytes, _, err = _face_encoding_from_bgr_image(img_bgr)
+        if live_enc_bytes is None:
+            return jsonify({"success": False, "error": "No face detected"}), 400
+        dist = enc_distance(live_enc_bytes, user["face_encoding"])
+        if dist <= 0.55:
+            session["user_id"] = user["id"]
+            session.modified = True
+
+            # >>> SEND LOGIN ALERT EMAIL <<<
+            send_email(
+                to=user["email"],
+                subject="New Login Detected – Your Account",
+                template="login_alert",
+                user_name=user["name"],
+                login_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+
+            return jsonify({"success": True, "redirect_url": url_for("index")})
+        else:
+            return jsonify({"success": False, "error": "Face not recognized"})
+    except Exception as e:
+        app.logger.error(f"Face login error: {e}")
+        return jsonify({"success": False, "error": "Server error"}), 500
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out.", "info")
+    return redirect(url_for("index"))
+
+# Profile Route
+@app.route("/profile")
+@login_required
+def profile():
+    user = fetchone("SELECT * FROM users WHERE id = %s", (session["user_id"],))
+    orders_raw = fetchall("SELECT * FROM orders WHERE user_id = %s", (user["id"],))
+    orders = []
+    for order in orders_raw:
+        order_items = fetchall(
+            "SELECT oi.*, p.name, p.warranty_years FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = %s",
+            (order["id"],),
+        )
+        address = f"{order.get('address_line','')}, {order.get('city','')}, {order.get('state','')} - {order.get('pincode','')}"
+        total = sum((Decimal(str(i["unit_price"])) * i["quantity"] for i in order_items), start=Decimal("0.00"))
+        # Add warranty status to each product
+        for item in order_items:
+            warranty_status = "no_warranty"
+            warranty_end_date = None
+            # Check if product has warranty years and order has creation date
+            if item.get("warranty_years") and item["warranty_years"] > 0 and order.get("created_at"):
+                try:
+                    # Calculate warranty end date
+                    warranty_end_date = order["created_at"] + timedelta(days=item["warranty_years"] * 365)
+                    if warranty_end_date > datetime.now():
+                        warranty_status = "active"
+                    else:
+                        warranty_status = "expired"
+                except Exception as e:
+                    app.logger.error(f"Error calculating warranty: {e}")
+                    warranty_status = "error"
+            elif not item.get("warranty_years") or item["warranty_years"] == 0:
+                warranty_status = "no_warranty"
+            else:
+                warranty_status = "no_date"
+            item["warranty_status"] = warranty_status
+            item["warranty_end_date"] = warranty_end_date
+        orders.append({
+            "id": order["id"],
+            "products": order_items,
+            "total": total,
+            "date_time": order.get("created_at"),
+            "address": address,
+        })
+    # Fetch warranty claims
+    claims = fetchall("""
+        SELECT wc.*, p.name AS product_name 
+        FROM warranty_claims wc 
+        JOIN products p ON p.id = wc.product_id 
+        WHERE wc.user_id = %s 
+        ORDER BY wc.created_at DESC
+    """, (user["id"],))
+    return render_template("profile.html", user=user, orders=orders, claims=claims)
+
+# --- WARRANTY CLAIMS ---
+@app.route("/claim-warranty", methods=["POST"])
+@login_required
+def claim_warranty():
+    user_id = session["user_id"]
+    order_id = request.form.get("order_id")
+    product_id = request.form.get("product_id")
+    reason = request.form.get("reason", "").strip()
+    claim_date = request.form.get("claim_date")
+    if not (order_id and product_id and reason and claim_date):
+        flash("All fields are required for warranty claim.", "danger")
+        return redirect(url_for("profile"))
+    # Insert claim
+    claim_id = execute(
+        "INSERT INTO warranty_claims (user_id, order_id, product_id, reason, claim_date, status, created_at) "
+        "VALUES (%s,%s,%s,%s,%s,%s,NOW())",
+        (user_id, order_id, product_id, reason, claim_date, "pending"),
+    )
+    # Fetch product and user info for email
+    product = fetchone("SELECT name FROM products WHERE id=%s", (product_id,))
+    user = fetchone("SELECT name, email FROM users WHERE id=%s", (user_id,))
+    product_name = product["name"] if product else "Unknown"
+    user_name = user["name"] if user else "Unknown"
+    # Send email to admin
+    send_email(
+        to="admin@example.com",  # change this
+        subject=f"New Warranty Claim #{claim_id}",
+        template="warranty_claim_notification",
+        user_name=user_name,
+        product_name=product_name,
+        order_id=order_id,
+        claim_date=claim_date,
+        reason=reason,
+    )
+    flash("Warranty claim submitted successfully.", "success")
+    return redirect(url_for("profile"))
+
+@app.route("/profile/face/reset", methods=["POST"])
+@login_required
+def profile_face_reset():
+    captured_data = request.form.get("captured_image", "").strip()
+    if captured_data:
+        img_bgr, err = _decode_base64_image(captured_data)
+        if img_bgr is None:
+            flash(f"Image decode failed: {err}", "danger")
+            return redirect(url_for("profile"))
+        enc_bytes, cropped_bgr, err = _face_encoding_from_bgr_image(img_bgr)
+        if enc_bytes is None:
+            flash(f"Face detection failed: {err}", "danger")
+            return redirect(url_for("profile"))
+    else:
+        flash("Opening webcam to capture new face.", "info")
+        enc_bytes, cropped_bgr, err = capture_face_encoding_server(window_title="Update face")
+        if enc_bytes is None:
+            flash(f"Face update failed: {err}", "danger")
+            return redirect(url_for("profile"))
+    execute("UPDATE users SET face_encoding=%s WHERE id=%s", (enc_bytes, session["user_id"]))
+    if cropped_bgr is not None:
+        rel_path = _save_face_image_bytes(session["user_id"], cropped_bgr)
+        if rel_path:
+            try:
+                execute("UPDATE users SET face_image=%s WHERE id=%s", (rel_path, session["user_id"]))
+            except Exception:
+                pass
+    flash("Face updated.", "success")
+    return redirect(url_for("profile"))
+
+# Wishlist routes
+@app.route("/wishlist")
+@login_required
+def wishlist():
+    """Display user's wishlist"""
+    wishlist_items = []
+    user_id = session["user_id"]
+    # Fetch wishlist items with product details
+    items = fetchall("""
+        SELECT w.id as wishlist_id, p.*, 
+        CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url
+        FROM wishlist w
+        JOIN products p ON p.id = w.product_id
+        WHERE w.user_id = %s
+        ORDER BY w.created_at DESC
+    """, (user_id,))
+    return render_template("wishlist.html", wishlist_items=items)
+
+@app.route("/add-to-wishlist/<int:product_id>", methods=["POST"])
+@login_required
+def add_to_wishlist(product_id):
+    """Add product to wishlist"""
+    user_id = session["user_id"]
+    # Check if already in wishlist
+    existing = fetchone(
+        "SELECT id FROM wishlist WHERE user_id = %s AND product_id = %s", 
+        (user_id, product_id)
+    )
+    if not existing:
+        execute(
+            "INSERT INTO wishlist (user_id, product_id) VALUES (%s, %s)",
+            (user_id, product_id)
+        )
+        flash("Added to wishlist!", "success")
+    else:
+        flash("Already in your wishlist", "info")
+    return redirect(request.referrer or url_for("index"))
+
+@app.route("/remove-from-wishlist/<int:wishlist_id>", methods=["POST"])
+@login_required
+def remove_from_wishlist(wishlist_id):
+    """Remove item from wishlist"""
+    user_id = session["user_id"]
+    # Verify ownership
+    item = fetchone(
+        "SELECT id FROM wishlist WHERE id = %s AND user_id = %s", 
+        (wishlist_id, user_id)
+    )
+    if item:
+        execute("DELETE FROM wishlist WHERE id = %s", (wishlist_id,))
+        flash("Removed from wishlist", "success")
+    else:
+        flash("Item not found", "error")
+    return redirect(url_for("wishlist"))
+
+@app.route("/move-wishlist-to-cart/<int:wishlist_id>", methods=["POST"])
+@login_required
+def move_wishlist_to_cart(wishlist_id):
+    """Move wishlist item to cart"""
+    user_id = session["user_id"]
+    # Verify ownership and get product ID
+    item = fetchone("""
+        SELECT w.product_id, p.name 
+        FROM wishlist w
+        JOIN products p ON p.id = w.product_id
+        WHERE w.id = %s AND w.user_id = %s
+    """, (wishlist_id, user_id))
+    if not item:
+        flash("Item not found", "error")
+        return redirect(url_for("wishlist"))
+    # Add to cart
+    cart_init()
+    product_id = str(item["product_id"])
+    session["cart"][product_id] = session["cart"].get(product_id, 0) + 1
+    session.modified = True
+    # Remove from wishlist
+    execute("DELETE FROM wishlist WHERE id = %s", (wishlist_id,))
+    flash(f"{item['name']} added to cart!", "success")
+    return redirect(url_for("wishlist"))
+
+# Checkout Route
+@app.route("/checkout", methods=["GET", "POST"])
+@login_required
+def checkout():
+    items, subtotal = cart_items()
+    if not items:
+        flash("Cart is empty.", "warning")
+        return redirect(url_for("cart"))
+    # Fetch user profile for pre-fill
+    user = fetchone("""
+        SELECT name, email, mobile, address_line1, address_line2, city, state, pincode 
+        FROM users WHERE id = %s
+    """, (session["user_id"],))
+    if request.method == "POST":
+        # --- Face verification (unchanged) ---
+        flash("Confirming identity via face verification.", "info")
+        row = fetchone("SELECT face_encoding FROM users WHERE id=%s", (session["user_id"],))
+        if not row or row["face_encoding"] is None:
+            flash("No face registered.", "danger")
+            return render_template("checkout.html", items=items, subtotal=subtotal, user=user)
+        live_enc, face_img, err = capture_face_encoding_server(window_title="Checkout: verify identity")
+        if live_enc is None:
+            flash(f"Face verification failed: {err}", "danger")
+            return render_template("checkout.html", items=items, subtotal=subtotal, user=user)
+        dist = enc_distance(live_enc, row["face_encoding"])
+        if dist > 0.55:
+            flash("Face mismatch. Checkout blocked.", "danger")
+            return render_template("checkout.html", items=items, subtotal=subtotal, user=user)
+        # --- Form data ---
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        address = request.form.get("address", "").strip()  # This is the combined address field in your form
+        city = request.form.get("city", "").strip()
+        state = request.form.get("state", "").strip()
+        pincode = request.form.get("pincode", "").strip()
+        if not all([name, email, address, city, state, pincode]):
+            flash("Fill all fields.", "danger")
+            return render_template("checkout.html", items=items, subtotal=subtotal, user=user)
+        # --- Place order ---
+        order_id = execute(
+            "INSERT INTO orders (user_id, customer_name, customer_email, address_line, city, state, pincode, total_amount) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            (session.get("user_id"), name, email, address, city, state, pincode, str(subtotal)),
+        )
+        for it in items:
+            p = it["product"]
+            execute(
+                "INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (%s,%s,%s,%s)",
+                (order_id, p["id"], it["qty"], str(p["price"])),
+            )
+            execute("UPDATE products SET stock = GREATEST(stock - %s, 0) WHERE id=%s", (it["qty"], p["id"]))
+        session["cart"] = {}
+        session.modified = True
+        if send_email(email, f"Order #{order_id} Confirmed", "order_confirmation", 
+                     user_name=name, order_id=order_id, order_items=items, total_amount=subtotal):
+            flash("Order placed! Confirmation email sent.", "success")
+        else:
+            flash("Order placed! Email not sent (not configured).", "warning")
+        return redirect(url_for("order_success", order_id=order_id))
+    # GET: render with pre-filled user data
+    return render_template("checkout.html", items=items, subtotal=subtotal, user=user)
+
+@app.route("/order-success/<int:order_id>")
+@login_required
+def order_success(order_id):
+    order = fetchone("SELECT * FROM orders WHERE id=%s", (order_id,))
+    items = fetchall(
+        "SELECT oi.*, p.name FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id=%s",
+        (order_id,),
+    )
+    return render_template("order_success.html", order=order, items=items)
+
+# Admin Routes
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    products = fetchall(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p JOIN categories c ON c.id=p.category_id ORDER BY p.created_at DESC"
+    )
+    cats = fetchall("SELECT * FROM categories ORDER BY name")
+    return render_template("admin_dashboard.html", products=products, categories=cats)
+
+@app.route("/admin/product/new", methods=["POST"])
+@admin_required
+def admin_product_new():
+    name = request.form.get("name", "").strip()
+    description = request.form.get("description", "").strip()
+    price = Decimal(request.form.get("price", "0") or "0")
+    warranty_years = int(request.form.get("warranty_years", 0) or 0)  # <-- ADD THIS LINE
+    category_id = int(request.form.get("category_id"))
+    stock = int(request.form.get("stock", "100") or "100")
+    image_url = (request.form.get("image_url") or "").strip()
+    file = request.files.get("image")
+    image_blob = None
+    image_mimetype = None
+    if file and file.filename:
+        data = file.read()
+        if len(data) > 8 * 1024 * 1024:
+            flash("Image too large (max 8MB).", "danger")
+            return redirect(url_for("admin_dashboard"))
+        image_blob = data
+        image_mimetype = file.mimetype or "image/jpeg"
+    # REPLACE THE EXISTING INSERT LOGIC WITH THIS:
+    if image_blob:
+        execute(
+            "INSERT INTO products (name, description, price, warranty_years, image_blob, image_mimetype, image_url, category_id, stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (name, description, str(price), warranty_years, image_blob, image_mimetype, None, category_id, stock),
+        )
+    else:
+        execute(
+            "INSERT INTO products (name, description, price, warranty_years, image_url, category_id, stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (name, description, str(price), warranty_years, image_url, category_id, stock),
+        )
+    flash("Product created.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/product/<int:pid>/delete", methods=["POST"])
+@admin_required
+def admin_product_delete(pid):
+    execute("DELETE FROM products WHERE id=%s", (pid,))
+    flash("Product deleted.", "warning")
+    return redirect(url_for("admin_dashboard"))
+
+# Error Handlers
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("base.html", content="<div class='container'><h2>403: Forbidden</h2></div>"), 403
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("base.html", content="<div class='container'><h2>404: Page not found</h2></div>"), 404
+
+# ========== RUN APP ON LAN ==========
+if __name__ == "__main__":
+    app.run(host='192.168.1.9', port=5001, debug=True, ssl_context='adhoc')

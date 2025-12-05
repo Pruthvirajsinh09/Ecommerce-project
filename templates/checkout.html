@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h2 class="section-title">Checkout</h2>
+
+  <div class="checkout-grid">
+    <!-- CORRECT: Form submits to checkout endpoint -->
+    <form method="post" action="{{ url_for('checkout') }}" class="form">
+      <div class="row2">
+        <label>Full name
+          <input type="text" name="name" value="{{ user.name if user.name else '' }}" required>
+        </label>
+
+        <label>Email
+          <input type="email" name="email" value="{{ user.email if user.email else '' }}" required>
+        </label>
+      </div>
+
+      <label>Address
+        <textarea name="address" required rows="3">{% if user.address_line1 %}{{ user.address_line1 }}{% endif %}{% if user.address_line2 %}, {{ user.address_line2 }}{% endif %}</textarea>
+      </label>
+
+      <div class="row2">
+        <label>City
+          <input type="text" name="city" value="{{ user.city if user.city else '' }}" required>
+        </label>
+
+        <label>State
+          <input type="text" name="state" value="{{ user.state if user.state else '' }}" required>
+        </label>
+      </div>
+
+      <label>Pincode
+        <input type="text" name="pincode" value="{{ user.pincode if user.pincode else '' }}" required>
+      </label>
+
+      <button type="submit" class="btn">Confirm & Pay</button>
+      <a class="btn btn-link" href="{{ url_for('cart') }}">Back to Cart</a>
+    </form>
+
+    <ul class="summary">
+      {% for it in items %}
+        <li>
+          <span>{{ it.product.name }} × {{ it.qty }}</span>
+          <strong>₹{{ "%.2f"|format(it.line_total) }}</strong>
+        </li>
+      {% endfor %}
+      <li class="total">
+        <span>Total</span>
+        <strong>₹{{ "%.2f"|format(subtotal) }}</strong>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<style>
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.form input,
+.form textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form .row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  display: inline-block;
+}
+
+.btn-link {
+  background-color: transparent;
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+.summary {
+  list-style: none;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.summary li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.summary li.total {
+  font-weight: bold;
+  font-size: 1.2rem;
+  border-top: 2px solid #007bff;
+  border-bottom: none;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+</style>
+{% endblock %}

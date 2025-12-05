@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h2>Email verification</h2>
+  <p>A 6-character code was sent to <strong>{{ email }}</strong>. Enter it below.</p>
+  <form method="POST" action="{{ url_for('verify_code', token=token) }}">
+    <div class="form-group">
+      <label for="code">Verification code</label>
+      <input id="code" name="code" type="text" maxlength="6" required class="form-control">
+    </div>
+    <button class="btn btn-primary" type="submit">Verify</button>
+  </form>
+  <hr>
+  <p>
+    Didn't receive it? <a href="{{ url_for('register') }}">Register again</a> (this will send a new code).
+  </p>
+</div>
+{% endblock %}

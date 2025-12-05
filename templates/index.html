@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="container">
+  <h2 class="section-title">Featured</h2>
+  <div class="grid">
+    {% for p in featured %}
+      <div class="card">
+        <!-- ✅ keep everything inside form -->
+        <form action="{{ url_for('add_to_cart', product_id=p.id, product_name=p.name) }}" method="post" class="form-inline">
+          <img src="{{ p.image_url }}" alt="{{ p.name }}">
+          <div class="card-body">
+            <h3>{{ p.name }}</h3>
+            <p class="muted">{{ p.category_name }}</p>
+            <p class="price">₹{{ "%.2f"|format(p.price) }}</p>
+      
+            <!-- Inside product card -->
+            <div class="card-actions">
+            <form method="POST" action="{{ url_for('add_to_cart', product_id=p.id) }}" style="display:inline;">
+            <input type="number" name="qty" value="1" min="1" style="width:60px;">
+            <button type="submit" class="btn">Add to Cart</button>
+             </form>
+  
+               {% if me %}
+              <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" style="display:inline;">
+               <button type="submit" class="btn btn-outline">♡ Wishlist</button>
+              </form>
+             {% endif %}
+          </div>
+          </div>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

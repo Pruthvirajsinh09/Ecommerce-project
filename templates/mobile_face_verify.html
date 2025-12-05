@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Face Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            margin: 20px auto;
+            background: #000;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:disabled {
+            background: #ccc;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Verify Your Face</h1>
+        <p>Please allow camera access to continue.</p>
+        
+        <video id="video" autoplay playsinline></video>
+        
+        <button id="verify-btn">Capture & Verify</button>
+        
+        <div id="status" style="display:none;"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const button = document.getElementById('verify-btn');
+        const statusDiv = document.getElementById('status');
+        let stream = null;
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user' }  // Front camera
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                showError('❌ Camera access denied. Please allow permissions.');
+                console.error(err);
+            }
+        }
+
+        // Capture image and send to server
+        async function captureAndVerify() {
+            if (!video.srcObject) return;
+
+            button.disabled = true;
+            button.textContent = 'Processing...';
+
+            // Create canvas to capture frame
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to base64 JPEG
+            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Get token from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                showError('❌ No token found in URL.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/mobile-verify/${token}/confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: imageDataUrl
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.ok) {
+                    showSuccess('✅ Face verified! Logging you in...');
+                    
+                    // Notify main system (admin browser) via polling or WebSocket
+                    // For now, just redirect or close
+                    setTimeout(() => {
+                        alert('Verification complete. You may close this window.');
+                        window.close();
+                    }, 2000);
+                } else {
+                    showError(`❌ ${result.error || 'Verification failed. Please try again.'}`);
+                    button.disabled = false;
+                    button.textContent = 'Capture & Verify';
+                }
+            } catch (error) {
+                showError('❌ Network error. Please try again.');
+                button.disabled = false;
+                button.textContent = 'Capture & Verify';
+                console.error('Error:', error);
+            }
+        }
+
+        function showSuccess(message) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status success';
+            statusDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status error';
+            statusDiv.style.display = 'block';
+        }
+
+        // Start camera on load
+        initCamera();
+
+        // Set up button
+        button.addEventListener('click', captureAndVerify);
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h2 class="section-title">Mobile Login</h2>
+  <p>Scan the QR code with your mobile device to log in using face verification.</p>
+  
+  <div class="card">
+    <form id="mobile-login-form">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required class="form-control">
+      </div>
+      <button type="submit" class="btn">Generate QR Code</button>
+    </form>
+    
+    <div id="qr-container" style="display: none; margin-top: 20px; text-align: center;">
+      <h3>Scan this QR code with your mobile device</h3>
+      <div id="qrcode"></div>
+      <p style="margin-top: 10px; color: #666;">Your mobile device will open a page to capture your face for verification.</p>
+      <div id="verification-status" style="margin-top: 20px;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode.js/lib/qrcode.min.js"></script>
+<script>
+document.getElementById('mobile-login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('email').value;
+  
+  try {
+    const response = await fetch('/api/generate-verification-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: email })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Show QR code
+      document.getElementById('qr-container').style.display = 'block';
+      
+      // Generate QR code
+      new QRCode(document.getElementById("qrcode"), {
+        text: data.verification_url,
+        width: 200,
+        height: 200
+      });
+      
+      // Start checking verification status
+      checkVerificationStatus(data.token);
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Failed to generate verification token');
+  }
+});
+
+function checkVerificationStatus(token) {
+  const statusElement = document.getElementById('verification-status');
+  
+  const interval = setInterval(async () => {
+    try {
+      const response = await fetch(`/api/check-verification-status/${token}`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        statusElement.innerHTML = '<p style="color: green;">Login successful! Redirecting...</p>';
+        clearInterval(interval);
+        setTimeout(() => {
+          window.location.href = data.redirect_url;
+        }, 1000);
+      } else if (data.status === 'failed') {
+        statusElement.innerHTML = '<p style="color: red;">Face verification failed. Please try again.</p>';
+        clearInterval(interval);
+      } else if (data.status === 'expired') {
+        statusElement.innerHTML = '<p style="color: red;">Verification token expired. Please try again.</p>';
+        clearInterval(interval);
+      }
+    } catch (error) {
+      console.error('Error checking status:', error);
+    }
+  }, 2000);
+}
+</script>
+{% endblock %}

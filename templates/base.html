@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title or "ShopEase" }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+  <!-- Optional: Add Inter font from Google Fonts for best results -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-wrap">
+      <!-- LEFT: Brand (fixed width, won't shrink) -->
+      <a class="brand" href="{{ url_for('index') }}">
+        <span>ShopEase</span>
+      </a>
+
+      <!-- CENTER: Search Bar (flexible but constrained) -->
+      <form class="searchbar" action="{{ url_for('search') }}" method="get">
+        <input name="q" type="text" placeholder="Search products..." value="{{ request.args.get('q','') }}" autocomplete="off">
+        <button type="submit" aria-label="Search">
+          <svg class="icon icon-search" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <span class="btn-text">Search</span>
+        </button>
+      </form>
+
+      <!-- RIGHT: Navigation (won't shrink, icons + text) -->
+      <nav class="nav">
+        <!-- Home -->
+        {% if request.endpoint != 'index' %}
+          <a href="{{ url_for('index') }}" aria-label="Home">
+            <svg class="icon icon-home" viewBox="0 0 24 24">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            <span>Home</span>
+          </a>
+        {% endif %}
+
+        <!-- Categories -->
+        {% if request.endpoint not in ['categories', 'category', 'electronics', 'home_appliances'] %}
+          <a href="{{ url_for('categories') }}" aria-label="Categories">
+            <svg class="icon icon-category" viewBox="0 0 24 24">
+              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            <span>Categories</span>
+          </a>
+        {% endif %}
+
+        {% if me %}
+          <!-- Profile -->
+          {% if request.endpoint != 'profile' %}
+            <a href="{{ url_for('profile') }}" aria-label="Profile"> <!-- FIXED: changed from 'complete_profile' to 'profile' -->
+              <svg class="icon icon-user" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <span>Profile</span>
+            </a>
+          {% endif %}
+
+          <!-- Wishlist -->
+          {% if request.endpoint != 'wishlist' %}
+            <a href="{{ url_for('wishlist') }}">
+              <svg class="icon icon-heart" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span>Wishlist</span>
+              {% if wishlist_count and wishlist_count > 0 %}
+                <span class="badge">{{ wishlist_count }}</span>
+              {% endif %}
+            </a>
+          {% endif %}
+
+          <!-- Cart -->
+          {% if request.endpoint != 'cart' %}
+            <a href="{{ url_for('cart') }}">
+              <svg class="icon icon-cart" viewBox="0 0 24 24">
+                <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+              <span>Cart</span>
+              {% if cart_count and cart_count > 0 %}
+                <span class="badge">{{ cart_count }}</span>
+              {% endif %}
+            </a>
+          {% endif %}
+        {% else %}
+          <!-- Guest users -->
+          {% if request.endpoint != 'login' %}
+            <a href="{{ url_for('login') }}">
+              <svg class="icon icon-login" viewBox="0 0 24 24">
+                <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5z"/>
+                <path d="M20 19h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
+              </svg>
+              <span>Login</span>
+            </a>
+          {% endif %}
+          
+          {% if request.endpoint != 'register' %}
+            <a href="{{ url_for('register') }}">
+              <svg class="icon icon-user-plus" viewBox="0 0 24 24">
+                <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                <path d="M11 16v-2h2v2h2v2h-2v2h-2v-2H9v-2h2z"/>
+              </svg>
+              <span>Register</span>
+            </a>
+          {% endif %}
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap container">
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+<footer class="footer">
+  <div class="container footer-wrap">
+    <!-- Brand Slogan Section -->
+    <div class="footer-slogan">
+      <h3>Forgot your bill? We didn't.</h3>
+      <p>Your face is your warranty — no paperwork, ever.</p>
+    </div>
+
+    <!-- Footer Bottom: Copyright + Features -->
+    <div class="footer-bottom">
+      <small>© {{ year }} ShopEase. All items under one name.</small> <!-- FIXED: changed from now.year to year -->
+      <div class="footer-features">
+        <span>Secure Shopping</span>
+        <span>Easy Returns</span>
+        <span>24/7 Support</span>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Helper to update cart badge
+    function updateCartBadge(count) {
+        const badge = document.querySelector('.nav-link[href$="/cart"] .badge');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        } else {
+            // Create badge if missing
+            const cartLink = document.querySelector('.nav-link[href$="/cart"]');
+            if (cartLink && count > 0) {
+                const span = document.createElement('span');
+                span.className = 'badge bg-danger ms-1';
+                span.textContent = count;
+                cartLink.appendChild(span);
+            }
+        }
+    }
+
+    // Listen for cart changes triggered by AJAX
+    // You can hook into your existing AJAX success callbacks, e.g.:
+    // - after add-to-cart
+    // - after remove_from_cart
+    // - after update-cart
+    // Example for /add-to-cart (if using fetch/AJAX):
+    // (You'll need to integrate this into your frontend JS)
+});
+</script>

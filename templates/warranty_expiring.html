@@ -1,0 +1,19 @@
+<!-- templates/emails/warranty_expiring.html -->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Warranty Expiring Soon</title></head>
+<body>
+  <h2>Hello {{ user_name }},</h2>
+  <p>Your warranty is expiring soon for the following product(s):</p>
+  <ul>
+  {% for item in expiring_items %}
+    <li>
+      <strong>{{ item.product_name }}</strong> (Order #{{ item.order_id }})<br>
+      Warranty expires on: <strong>{{ item.warranty_end_date.strftime('%Y-%m-%d') }}</strong>
+    </li>
+  {% endfor %}
+  </ul>
+  <p>Please contact support if you'd like to extend or claim warranty before it expires.</p>
+  <p>— Team {{ shop_name }}</p>
+</body>
+</html>

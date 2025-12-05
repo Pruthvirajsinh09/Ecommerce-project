@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+  <h2 class="section-title">My Wishlist</h2>
+  
+  {% if wishlist_items %}
+  <div class="grid">
+    {% for item in wishlist_items %}
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ item.image_url }}" alt="{{ item.name }}">
+      </div>
+      <div class="card-body">
+        <h3>{{ item.name }}</h3>
+        <p class="price">₹{{ "%.2f"|format(item.price) }}</p>
+        <p class="muted">{{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}</p>
+        
+        <div class="wishlist-actions">
+          <form method="POST" action="{{ url_for('move_wishlist_to_cart', wishlist_id=item.wishlist_id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-sm">Move to Cart</button>
+          </form>
+          <form method="POST" action="{{ url_for('remove_from_wishlist', wishlist_id=item.wishlist_id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-outline" 
+                    onclick="return confirm('Remove from wishlist?')">Remove</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  
+  {% else %}
+  <div class="empty-state">
+    <p>Your wishlist is empty</p>
+    <a href="{{ url_for('index') }}" class="btn">Start Shopping</a>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.wishlist-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+</style>
+
+{% endblock %}
