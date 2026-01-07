@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Order Confirmation</title>
+</head>
+<body>
+    <h2>Thank you for your order, {{ customer.name }}!</h2>
+
+    <p>We’ve received your order and are processing it.</p>
+
+    <h3>Order details</h3>
+    <ul>
+        {% for item in items %}
+        <li>
+            {{ item.product.name }} (Qty: {{ item.qty }}) – ₹{{ item.line_total }}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <p><strong>Subtotal:</strong> ₹{{ subtotal }}</p>
+
+    <p>
+        Delivery to:<br>
+        {{ customer.address }}<br>
+        {{ customer.city }}, {{ customer.state }} – {{ customer.pincode }}
+    </p>
+
+    <p>If you have any questions, just reply to this email.</p>
+</body>
+</html>

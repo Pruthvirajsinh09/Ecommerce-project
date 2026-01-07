@@ -316,6 +316,9 @@ def send_mobile_verification_email(user_email, user_name, token):
         verification_url=url_for('mobile_verify', token=token, _external=True)
     )
 
+
+
+
 @app.context_processor
 def inject_now():
     user = current_user()
@@ -325,6 +328,64 @@ def inject_now():
         "cart_count": get_cart_count(),
         "wishlist_count": get_wishlist_count() if user else 0  # ✅ Inject wishlist count
     }
+
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    products = fetchall(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p JOIN categories c ON c.id=p.category_id ORDER BY p.created_at DESC"
+    )
+    cats = fetchall("SELECT * FROM categories ORDER BY name")
+    return render_template("admin_dashboard.html", products=products, categories=cats)
+
+@app.route("/admin/product/new", methods=["POST"])
+@admin_required
+def admin_product_new():
+    name = request.form.get("name", "").strip()
+    description = request.form.get("description", "").strip()
+    price = Decimal(request.form.get("price", "0") or "0")
+    warranty_years = int(request.form.get("warranty_years", 0) or 0)
+    category_id = int(request.form.get("category_id"))
+    stock = int(request.form.get("stock", "100") or "100")
+    image_url = (request.form.get("image_url") or "").strip()
+    file = request.files.get("image")
+
+    image_blob = None
+    image_mimetype = None
+    if file and file.filename:
+        data = file.read()
+        if len(data) > 8 * 1024 * 1024: # 8MB limit
+            flash("Image too large (max 8MB).", "danger")
+            return redirect(url_for("admin_dashboard"))
+        image_blob = data
+        image_mimetype = file.mimetype or "image/jpeg"
+
+    if image_blob:
+        execute(
+            "INSERT INTO products (name, description, price, warranty_years, image_blob, image_mimetype, image_url, category_id, stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (name, description, str(price), warranty_years, image_blob, image_mimetype, None, category_id, stock),
+        )
+    else:
+        execute(
+            "INSERT INTO products (name, description, price, warranty_years, image_url, category_id, stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (name, description, str(price), warranty_years, image_url, category_id, stock),
+        )
+
+    flash("Product created.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/product/<int:pid>/delete", methods=["POST"])
+@admin_required
+def admin_product_delete(pid):
+    execute("DELETE FROM products WHERE id=%s", (pid,))
+    flash("Product deleted.", "warning")
+    return redirect(url_for("admin_dashboard"))
 
 # --- FACE HELPERS ---
 def _save_face_image_bytes(uid, bgr_image):

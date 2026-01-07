@@ -15,7 +15,8 @@
       <!-- Camera preview (initially hidden) -->
       <div id="camera-section" style="display:none; margin-top:20px; text-align:center;">
         <h5>Look at the camera</h5>
-        <video id="video" width="320" height="240" autoplay playsinline style="border:1px solid #ccc; border-radius:8px;"></video>
+        <video id="video" width="320" height="240" autoplay playsinline
+          style="border:1px solid #ccc; border-radius:8px;"></video>
         <br><br>
         <button type="button" id="capture-btn" class="btn">✅ Capture & Login</button>
       </div>
@@ -54,22 +55,22 @@
 <!-- QR Code Library -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-// Start camera when "Login" button is clicked
-document.getElementById('login-btn').addEventListener('click', async () => {
+  // Start camera when "Login" button is clicked
+  document.getElementById('login-btn').addEventListener('click', async () => {
     const video = document.getElementById('video');
     const cameraSection = document.getElementById('camera-section');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        video.srcObject = stream;
-        cameraSection.style.display = 'block';
-        document.getElementById('login-btn').style.display = 'none';
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = stream;
+      cameraSection.style.display = 'block';
+      document.getElementById('login-btn').style.display = 'none';
     } catch (err) {
-        alert('Camera access denied. Please allow camera permission.');
+      alert('Camera access denied. Please allow camera permission.');
     }
-});
+  });
 
-// Capture image and submit form
-document.getElementById('capture-btn').addEventListener('click', () => {
+  // Capture image and submit form
+  document.getElementById('capture-btn').addEventListener('click', () => {
     const video = document.getElementById('video');
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth || 320;
@@ -86,53 +87,53 @@ document.getElementById('capture-btn').addEventListener('click', () => {
 
     // Submit form
     document.getElementById('login-form').submit();
-});
+  });
 
-// Mobile verification (unchanged)
-document.getElementById('mobile-login-form').addEventListener('submit', async function(e) {
+  // Mobile verification (unchanged)
+  document.getElementById('mobile-login-form').addEventListener('submit', async function (e) {
     e.preventDefault();
     const email = document.getElementById('email-mobile').value;
     try {
-        const res = await fetch('/api/generate-verification-token', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email})
-        });
-        const data = await res.json();
-        if (data.success) {
-            document.getElementById('qr-container').style.display = 'block';
-            new QRCode(document.getElementById("qrcode"), {text: data.verification_url, width: 200, height: 200});
-            document.getElementById('link-btn').href = data.verification_url;
-            checkVerificationStatus(data.token);
-        } else {
-            alert('Error: ' + (data.error || 'Unknown'));
-        }
+      const res = await fetch('/api/generate-verification-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('qr-container').style.display = 'block';
+        new QRCode(document.getElementById("qrcode"), { text: data.verification_url, width: 200, height: 200 });
+        document.getElementById('link-btn').href = data.verification_url;
+        checkVerificationStatus(data.token);
+      } else {
+        alert('Error: ' + (data.error || 'Unknown'));
+      }
     } catch (err) {
-        alert('Failed to generate token');
+      alert('Failed to generate token');
     }
-});
+  });
 
-function checkVerificationStatus(token) {
+  function checkVerificationStatus(token) {
     const statusEl = document.getElementById('verification-status');
     const interval = setInterval(async () => {
-        try {
-            const res = await fetch(`/api/check-verification-status/${token}`);
-            const data = await res.json();
-            if (data.status === 'success') {
-                statusEl.innerHTML = '<p style="color:green;">✅ Login successful! Redirecting...</p>';
-                clearInterval(interval);
-                setTimeout(() => window.location.href = data.redirect_url, 1000);
-            } else if (data.status === 'failed') {
-                statusEl.innerHTML = '<p style="color:red;">❌ Face verification failed.</p>';
-                clearInterval(interval);
-            } else if (data.status === 'expired') {
-                statusEl.innerHTML = '<p style="color:red;">⏰ Token expired.</p>';
-                clearInterval(interval);
-            }
-        } catch (err) {
-            console.error('Status check error:', err);
+      try {
+        const res = await fetch(`/api/check-verification-status/${token}`);
+        const data = await res.json();
+        if (data.status === 'success') {
+          statusEl.innerHTML = '<p style="color:green;">✅ Login successful! Redirecting...</p>';
+          clearInterval(interval);
+          setTimeout(() => window.location.href = data.redirect_url, 1000);
+        } else if (data.status === 'failed') {
+          statusEl.innerHTML = '<p style="color:red;">❌ Face verification failed.</p>';
+          clearInterval(interval);
+        } else if (data.status === 'expired') {
+          statusEl.innerHTML = '<p style="color:red;">⏰ Token expired.</p>';
+          clearInterval(interval);
         }
+      } catch (err) {
+        console.error('Status check error:', err);
+      }
     }, 2000);
-}
+  }
 </script>
 {% endblock %}

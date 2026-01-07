@@ -1,33 +1,399 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container">
-  <h2 class="section-title">{{ category.name }}</h2>
-  <div class="grid">
+  <!-- Category Header -->
+  <div class="category-header"
+    style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 2rem; border-radius: var(--radius-lg); color: white; margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <nav style="margin-bottom: 0.5rem; font-size: 0.875rem;">
+          <a href="{{ url_for('index') }}" style="color: rgba(255,255,255,0.8); text-decoration: none;">
+            <i class="fas fa-home" style="margin-right: 0.5rem;"></i>Home
+          </a>
+          <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.5);">/</span>
+          <a href="{{ url_for('categories') }}" style="color: rgba(255,255,255,0.8); text-decoration: none;">
+            Categories
+          </a>
+          <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.5);">/</span>
+          <span style="color: white; font-weight: 500;">{{ category.name }}</span>
+        </nav>
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">
+          {{ category.name }}
+        </h1>
+        <p style="opacity: 0.9;">
+          {% if products %}
+          {{ products|length }} product{% if products|length != 1 %}s{% endif %} available
+          {% else %}
+          No products available
+          {% endif %}
+        </p>
+      </div>
+      <div class="category-icon"
+        style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.3);">
+        {% set icon = 'mobile-alt' if 'electronics' in category.name.lower() else
+        'home' if 'home' in category.name.lower() else
+        'tshirt' if 'fashion' in category.name.lower() else
+        'utensils' if 'kitchen' in category.name.lower() else
+        'laptop' if 'computer' in category.name.lower() else
+        'heart' if 'health' in category.name.lower() else
+        'car' if 'automotive' in category.name.lower() else
+        'book' if 'book' in category.name.lower() else
+        'gamepad' if 'gaming' in category.name.lower() else
+        'couch' if 'furniture' in category.name.lower() else
+        'shoe-prints' if 'footwear' in category.name.lower() else 'box' %}
+        <i class="fas fa-{{ icon }}" style="font-size: 2rem; color: white;"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Description -->
+  <div class="category-description"
+    style="background: white; padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 2rem;">
+    <p style="color: var(--gray-600); text-align: center;">
+      Browse our selection of {{ category.name|lower }} products. All products come with face recognition warranty
+      support.
+    </p>
+  </div>
+
+  <!-- Products Grid -->
+  {% if products %}
+  <div class="products-grid"
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
     {% for p in products %}
-      <div class="card">
-        <img src="{{ p.image_url }}" alt="{{ p.name }}">
-        <div class="card-body">
-          <h3>{{ p.name }}</h3>
-          <p class="muted">{{ p.category_name }}</p>
-          <p class="price">₹{{ "%.2f"|format(p.price) }}</p>
-          <!-- Inside product card -->
-          <div class="card-actions">
-           <form method="POST" action="{{ url_for('add_to_cart', product_id=p.id) }}" style="display:inline;">
-            <input type="number" name="qty" value="1" min="1" style="width:60px;">
-            <button type="submit" class="btn">Add to Cart</button>
+    <div class="product-card"
+      style="background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.3s, box-shadow 0.3s; position: relative;">
+      <!-- Product Image -->
+      <div class="product-image" style="height: 200px; overflow: hidden; position: relative;">
+        <img src="{{ p.image_url }}" alt="{{ p.name }}"
+          style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+
+        <!-- Product Badges -->
+        <div class="product-badges" style="position: absolute; top: 1rem; left: 1rem; display: flex; gap: 0.5rem;">
+          {% if p.warranty_years and p.warranty_years > 0 %}
+          <span class="badge"
+            style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+            {{ p.warranty_years }} Year{% if p.warranty_years != 1 %}s{% endif %} Warranty
+          </span>
+          {% endif %}
+
+          {% if p.stock <= 5 and p.stock> 0 %}
+            <span class="badge"
+              style="background: var(--warning); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+              Low Stock
+            </span>
+            {% endif %}
+
+            {% if p.stock == 0 %}
+            <span class="badge"
+              style="background: var(--danger); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+              Out of Stock
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions"
+          style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; opacity: 0; transition: opacity 0.3s;">
+          {% if me %}
+          <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" style="display: inline;">
+            <button type="submit" class="action-btn"
+              style="width: 36px; height: 36px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--danger); font-size: 1rem; transition: all 0.2s;">
+              <i class="fas fa-heart"></i>
+            </button>
           </form>
-  
-           {% if me %}
-          <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-outline">♡ Wishlist</button>
-           </form>
-           {% endif %}
-          </div>
+          {% endif %}
         </div>
       </div>
-    {% else %}
-      <p class="muted">No products in this category yet.</p>
+
+      <!-- Product Info -->
+      <div class="product-info" style="padding: 1.5rem;">
+        <div class="product-category" style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 0.5rem;">
+          {{ p.category_name }}
+        </div>
+        <h3 class="product-title"
+          style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--dark);">
+          {{ p.name }}
+        </h3>
+
+        {% if p.description %}
+        <p class="product-description"
+          style="color: var(--gray-600); margin-bottom: 1rem; font-size: 0.875rem; line-height: 1.5;">
+          {{ p.description[:80] }}{% if p.description|length > 80 %}...{% endif %}
+        </p>
+        {% endif %}
+
+        <div class="product-price"
+          style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 1.5rem;">
+          ₹{{ "%.2f"|format(p.price) }}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="product-actions" style="display: flex; gap: 0.75rem;">
+          {% if p.stock > 0 %}
+          <form method="POST" action="{{ url_for('add_to_cart', product_id=p.id) }}" style="flex: 1;">
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" name="qty" value="1" min="1" max="{{ p.stock }}"
+                style="width: 60px; padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius); text-align: center;">
+              <button type="submit" class="btn-primary"
+                style="flex: 1; background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                <i class="fas fa-cart-plus" style="margin-right: 0.5rem;"></i>
+                Add to Cart
+              </button>
+            </div>
+          </form>
+          {% else %}
+          <button disabled class="btn-disabled"
+            style="flex: 1; background: var(--gray-300); color: var(--gray-600); border: none; padding: 0.75rem; border-radius: var(--radius); font-weight: 600; cursor: not-allowed;">
+            Out of Stock
+          </button>
+          {% endif %}
+        </div>
+
+        <!-- Stock Info -->
+        {% if p.stock > 0 %}
+        <div class="stock-info" style="margin-top: 1rem; font-size: 0.875rem; color: var(--gray-600);">
+          <i class="fas fa-box" style="margin-right: 0.5rem;"></i>
+          {{ p.stock }} in stock
+        </div>
+        {% endif %}
+      </div>
+    </div>
     {% endfor %}
   </div>
+  {% else %}
+  <!-- Empty Products State -->
+  <div
+    style="text-align: center; padding: 4rem 2rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-bottom: 3rem;">
+    <div
+      style="width: 120px; height: 120px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--gray-400);">
+      <i class="fas fa-box-open fa-3x"></i>
+    </div>
+    <h2 style="font-size: 1.75rem; color: var(--dark); margin-bottom: 1rem;">No Products Available</h2>
+    <p style="color: var(--gray-600); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+      There are currently no products in this category. Check back soon or browse other categories.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('categories') }}" class="btn-primary"
+        style="display: inline-block; background: var(--primary); color: white; padding: 1rem 2rem; border-radius: var(--radius); text-decoration: none; font-weight: 600;">
+        <i class="fas fa-th-large" style="margin-right: 0.5rem;"></i>
+        Browse Categories
+      </a>
+      <a href="{{ url_for('index') }}" class="btn-outline"
+        style="display: inline-block; background: transparent; color: var(--primary); padding: 1rem 2rem; border-radius: var(--radius); text-decoration: none; font-weight: 600; border: 1px solid var(--primary);">
+        <i class="fas fa-home" style="margin-right: 0.5rem;"></i>
+        Go to Home
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Category Features -->
+  <div class="category-features"
+    style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 3rem;">
+    <h2
+      style="text-align: center; font-size: 1.5rem; color: var(--dark); margin-bottom: 2rem; font-family: 'Poppins', sans-serif;">
+      Why Shop {{ category.name }} with Us?
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+      <div class="feature" style="text-align: center;">
+        <div
+          style="width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Secure Warranty
+        </h3>
+        <p style="color: var(--gray-600); font-size: 0.875rem;">Face recognition warranty claims for easy support</p>
+      </div>
+
+      <div class="feature" style="text-align: center;">
+        <div
+          style="width: 60px; height: 60px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
+          <i class="fas fa-truck"></i>
+        </div>
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Fast Delivery</h3>
+        <p style="color: var(--gray-600); font-size: 0.875rem;">Quick shipping on all {{ category.name|lower }} products
+        </p>
+      </div>
+
+      <div class="feature" style="text-align: center;">
+        <div
+          style="width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
+          <i class="fas fa-undo"></i>
+        </div>
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Easy Returns</h3>
+        <p style="color: var(--gray-600); font-size: 0.875rem;">30-day return policy on eligible items</p>
+      </div>
+
+      <div class="feature" style="text-align: center;">
+        <div
+          style="width: 60px; height: 60px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
+          <i class="fas fa-headset"></i>
+        </div>
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Expert Support
+        </h3>
+        <p style="color: var(--gray-600); font-size: 0.875rem;">Specialized support for {{ category.name|lower }}
+          products</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Categories -->
+  <div style="text-align: center;">
+    <a href="{{ url_for('categories') }}" class="btn-outline"
+      style="display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; color: var(--primary); padding: 1rem 2rem; border-radius: var(--radius); text-decoration: none; font-weight: 600; border: 1px solid var(--primary); transition: all 0.2s;">
+      <i class="fas fa-arrow-left"></i>
+      Back to All Categories
+    </a>
+  </div>
 </div>
+
+<style>
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .product-card:hover .product-image img {
+    transform: scale(1.05);
+  }
+
+  .product-card:hover .quick-actions {
+    opacity: 1;
+  }
+
+  .action-btn:hover {
+    background: var(--primary) !important;
+    color: white !important;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark) !important;
+  }
+
+  .btn-outline:hover {
+    background: var(--primary) !important;
+    color: white !important;
+  }
+
+  @media (max-width: 768px) {
+    .category-header {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .category-icon {
+      margin: 0 auto;
+    }
+
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+
+    .product-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Add animation to product cards
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'opacity 0.5s, transform 0.5s';
+
+      // Stagger animation
+      setTimeout(() => {
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, index * 100);
+    });
+
+    // Add to cart animation
+    const addToCartForms = document.querySelectorAll('form[action*="add_to_cart"]');
+    addToCartForms.forEach(form => {
+      const button = form.querySelector('button[type="submit"]');
+      button.addEventListener('click', function (e) {
+        if (form.querySelector('input[name="qty"]').value <= 0) {
+          e.preventDefault();
+          showNotification('Please enter a valid quantity', 'error');
+          return;
+        }
+
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        this.disabled = true;
+
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          this.innerHTML = originalText;
+          this.disabled = false;
+        }, 2000);
+      });
+    });
+
+    // Add to wishlist animation
+    const wishlistButtons = document.querySelectorAll('form[action*="add_to_wishlist"] button');
+    wishlistButtons.forEach(button => {
+      button.addEventListener('click', function (e) {
+        const originalHTML = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-heart"></i>';
+        this.style.color = 'var(--danger)';
+
+        // Show success message
+        showNotification('Added to wishlist!', 'success');
+
+        // Reset after animation
+        setTimeout(() => {
+          this.innerHTML = originalHTML;
+        }, 1000);
+      });
+    });
+
+    // Quantity input validation
+    const quantityInputs = document.querySelectorAll('input[name="qty"]');
+    quantityInputs.forEach(input => {
+      input.addEventListener('change', function () {
+        const max = parseInt(this.getAttribute('max')) || 999;
+        const min = parseInt(this.getAttribute('min')) || 1;
+        let value = parseInt(this.value);
+
+        if (isNaN(value) || value < min) {
+          this.value = min;
+        } else if (value > max) {
+          this.value = max;
+          showNotification(`Maximum quantity is ${max}`, 'warning');
+        }
+      });
+    });
+  });
+
+  function showNotification(message, type) {
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <div style="position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--warning)'}; color: white; padding: 1rem 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 10000; min-width: 300px; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
+        <span>${message}</span>
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateX(20px)';
+      notification.style.transition = 'opacity 0.3s, transform 0.3s';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+</script>
 {% endblock %}

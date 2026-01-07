@@ -1,112 +1,899 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>{{ title or "ShopEase" }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
-  <!-- Optional: Add Inter font from Google Fonts for best results -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Base Variables */
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: rgba(37, 99, 235, 0.1);
+      --secondary: #7c3aed;
+      --accent: #f59e0b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --dark: #1f2937;
+      --light: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 6px 12px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 20px;
+    }
+
+    /* Reset and Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--gray-800);
+      background-color: #f8fafc;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* Header - Modern Style */
+    .header {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+      backdrop-filter: blur(10px);
+    }
+
+    .header-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+      gap: 2rem;
+    }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.75rem;
+      color: var(--dark);
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+
+    .brand:hover {
+      transform: translateY(-2px);
+    }
+
+    .brand-logo {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+    }
+
+    .brand-text {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-highlight {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Search Bar - Modern */
+    .search-container {
+      flex: 1;
+      max-width: 600px;
+    }
+
+    .search-form {
+      display: flex;
+      width: 100%;
+      position: relative;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 0.85rem 1.25rem 0.85rem 3rem;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      font-family: 'Inter', sans-serif;
+      background: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15), var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      z-index: 1;
+    }
+
+    .search-button {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.5rem;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .search-button:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    }
+
+    /* Navigation - Modern Style */
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      color: var(--gray-600);
+      text-decoration: none;
+      border-radius: var(--radius-lg);
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      background: white;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-link:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .nav-link.active:hover {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, #1e40af 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+
+    .nav-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+
+    /* Flash Messages - Modern */
+    .flash-container {
+      margin-top: 1rem;
+    }
+
+    .alert {
+      padding: 1.25rem;
+      border-radius: var(--radius-lg);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      backdrop-filter: blur(10px);
+      border: none;
+      box-shadow: var(--shadow-md);
+    }
+
+    .alert-success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #065f46;
+    }
+
+    .alert-error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+    }
+
+    .alert-warning {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+    }
+
+    .alert-info {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #1e40af;
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      padding: 2.5rem 0;
+      min-height: calc(100vh - 200px);
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    /* Footer - Modern */
+    .footer {
+      background: linear-gradient(135deg, var(--dark) 0%, #111827 100%);
+      color: white;
+      padding: 4rem 0 2rem;
+      margin-top: auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 3rem;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-section h3 {
+      color: white;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      position: relative;
+      display: inline-block;
+    }
+
+    .footer-section h3::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      width: 40px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .footer-section p {
+      color: var(--gray-300);
+      margin-bottom: 1rem;
+      line-height: 1.8;
+      font-size: 0.95rem;
+    }
+
+    .footer-section a {
+      color: var(--gray-300);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-block;
+      padding: 0.25rem 0;
+      position: relative;
+    }
+
+    .footer-section a::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 1px;
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    .footer-section a:hover {
+      color: white;
+      transform: translateX(5px);
+    }
+
+    .footer-section a:hover::after {
+      width: 100%;
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 2rem;
+      text-align: center;
+      color: var(--gray-400);
+      font-size: 0.9rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin: 2.5rem auto;
+      max-width: 800px;
+    }
+
+    .footer-feature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-feature:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-5px);
+      border-color: var(--primary);
+    }
+
+    .footer-feature i {
+      font-size: 2rem;
+      color: var(--primary);
+      background: rgba(37, 99, 235, 0.1);
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .footer-feature span {
+      font-weight: 500;
+      color: white;
+    }
+
+    /* Common Button Styles - Modern */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 2rem;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      font-size: 1rem;
+      gap: 0.75rem;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+      color: var(--dark);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-300) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+    }
+
+    .btn-outline:hover {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    }
+
+    /* IMAGE FIXES - Modern */
+    img {
+      max-width: 100% !important;
+      height: auto !important;
+      display: block !important;
+      object-fit: contain !important;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+      border-radius: var(--radius) !important;
+    }
+
+    .card img,
+    .product-card img,
+    .product-image img,
+    .grid .card img {
+      width: 100% !important;
+      height: 220px !important;
+      object-fit: contain !important;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+      padding: 20px !important;
+      border-radius: var(--radius-lg) !important;
+      margin: 0 auto 20px !important;
+      display: block !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .card img:hover,
+    .product-card img:hover {
+      transform: scale(1.05) !important;
+      box-shadow: var(--shadow-lg) !important;
+    }
+
+    /* Category images */
+    .category-image img {
+      width: 100% !important;
+      height: 160px !important;
+      object-fit: contain !important;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+      padding: 20px !important;
+      border-radius: var(--radius-lg) !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .category-image img:hover {
+      transform: translateY(-5px) !important;
+      box-shadow: var(--shadow-lg) !important;
+    }
+
+    /* Profile images */
+    .profile-avatar img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+      background: none !important;
+      padding: 0 !important;
+      border: 3px solid var(--primary) !important;
+    }
+
+    /* Cart images */
+    .cart-item img,
+    .order-item img {
+      width: 90px !important;
+      height: 90px !important;
+      object-fit: contain !important;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+      padding: 10px !important;
+      border-radius: var(--radius) !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .cart-item img:hover,
+    .order-item img:hover {
+      transform: scale(1.1) !important;
+    }
+
+    /* Image fallback styles */
+    .image-placeholder {
+      width: 100%;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: var(--radius-lg);
+      color: var(--gray-400);
+      font-size: 3.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .container {
+        padding: 0 2rem;
+      }
+
+      .header-wrapper {
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-wrapper {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0.75rem 0;
+      }
+
+      .brand {
+        font-size: 1.5rem;
+      }
+
+      .search-container {
+        width: 100%;
+        max-width: 100%;
+        order: 3;
+      }
+
+      .search-input {
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+      }
+
+      .search-icon {
+        left: 1rem;
+      }
+
+      .search-button {
+        padding: 0.5rem 1.25rem;
+      }
+
+      .nav-menu {
+        width: 100%;
+        justify-content: center;
+        gap: 0.5rem;
+        order: 2;
+      }
+
+      .nav-link {
+        padding: 0.75rem 1rem;
+        flex: 1;
+        justify-content: center;
+      }
+
+      .nav-link span:not(.badge) {
+        display: none;
+      }
+
+      .nav-link .nav-icon {
+        margin: 0;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 2rem;
+      }
+
+      .footer-section h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .footer-features {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.95rem;
+      }
+
+      .card img,
+      .product-card img,
+      .product-image img,
+      .grid .card img {
+        height: 180px !important;
+        padding: 15px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 1rem;
+      }
+
+      .header-wrapper {
+        gap: 0.75rem;
+      }
+
+      .nav-menu {
+        gap: 0.25rem;
+      }
+
+      .nav-link {
+        padding: 0.75rem;
+        min-width: 44px;
+        min-height: 44px;
+      }
+
+      .footer {
+        padding: 3rem 0 1.5rem;
+      }
+
+      .footer-feature {
+        padding: 1rem;
+      }
+    }
+
+    /* Animations */
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .alert {
+      animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Floating animations */
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Glass effect */
+    .glass {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+  </style>
 </head>
+
 <body>
+  <!-- Header -->
   <header class="header">
-    <div class="container header-wrap">
-      <!-- LEFT: Brand (fixed width, won't shrink) -->
-      <a class="brand" href="{{ url_for('index') }}">
-        <span>ShopEase</span>
+    <div class="container header-wrapper">
+      <a class="brand float-animation" href="{{ url_for('index') }}">
+        <i class="fas fa-bolt brand-logo"></i>
+        <span class="brand-text">Shop<span class="brand-highlight">Ease</span></span>
       </a>
 
-      <!-- CENTER: Search Bar (flexible but constrained) -->
-      <form class="searchbar" action="{{ url_for('search') }}" method="get">
-        <input name="q" type="text" placeholder="Search products..." value="{{ request.args.get('q','') }}" autocomplete="off">
-        <button type="submit" aria-label="Search">
-          <svg class="icon icon-search" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
-          </svg>
-          <span class="btn-text">Search</span>
-        </button>
-      </form>
+      <div class="search-container">
+        <form class="search-form" action="{{ url_for('search') }}" method="get">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" name="q" class="search-input" placeholder="Search products, brands, categories..."
+            value="{{ request.args.get('q','') }}" autocomplete="off">
+          <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>
+            <span class="btn-text">Search</span>
+          </button>
+        </form>
+      </div>
 
-      <!-- RIGHT: Navigation (won't shrink, icons + text) -->
-      <nav class="nav">
-        <!-- Home -->
+      <nav class="nav-menu">
         {% if request.endpoint != 'index' %}
-          <a href="{{ url_for('index') }}" aria-label="Home">
-            <svg class="icon icon-home" viewBox="0 0 24 24">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-            </svg>
-            <span>Home</span>
-          </a>
+        <a href="{{ url_for('index') }}" class="nav-link" aria-label="Home" title="Home">
+          <i class="fas fa-home nav-icon"></i>
+          <span>Home</span>
+        </a>
         {% endif %}
 
-        <!-- Categories -->
-        {% if request.endpoint not in ['categories', 'category', 'electronics', 'home_appliances'] %}
-          <a href="{{ url_for('categories') }}" aria-label="Categories">
-            <svg class="icon icon-category" viewBox="0 0 24 24">
-              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-            </svg>
-            <span>Categories</span>
-          </a>
+        {% if request.endpoint not in ['categories', 'category'] %}
+        <a href="{{ url_for('categories') }}" class="nav-link" aria-label="Categories" title="Categories">
+          <i class="fas fa-th-large nav-icon"></i>
+          <span>Categories</span>
+        </a>
         {% endif %}
 
         {% if me %}
-          <!-- Profile -->
-          {% if request.endpoint != 'profile' %}
-            <a href="{{ url_for('profile') }}" aria-label="Profile"> <!-- FIXED: changed from 'complete_profile' to 'profile' -->
-              <svg class="icon icon-user" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-              <span>Profile</span>
-            </a>
-          {% endif %}
+        {% if request.endpoint != 'profile' %}
+        <a href="{{ url_for('profile') }}" class="nav-link" aria-label="Profile" title="Profile">
+          <i class="fas fa-user-circle nav-icon"></i>
+          <span>Profile</span>
+        </a>
+        {% endif %}
 
-          <!-- Wishlist -->
-          {% if request.endpoint != 'wishlist' %}
-            <a href="{{ url_for('wishlist') }}">
-              <svg class="icon icon-heart" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-              <span>Wishlist</span>
-              {% if wishlist_count and wishlist_count > 0 %}
-                <span class="badge">{{ wishlist_count }}</span>
-              {% endif %}
-            </a>
+        {% if request.endpoint != 'wishlist' %}
+        <a href="{{ url_for('wishlist') }}" class="nav-link" aria-label="Wishlist" title="Wishlist">
+          <i class="fas fa-heart nav-icon"></i>
+          <span>Wishlist</span>
+          {% if wishlist_count and wishlist_count > 0 %}
+          <span class="badge">{{ wishlist_count }}</span>
           {% endif %}
+        </a>
+        {% endif %}
 
-          <!-- Cart -->
-          {% if request.endpoint != 'cart' %}
-            <a href="{{ url_for('cart') }}">
-              <svg class="icon icon-cart" viewBox="0 0 24 24">
-                <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-              </svg>
-              <span>Cart</span>
-              {% if cart_count and cart_count > 0 %}
-                <span class="badge">{{ cart_count }}</span>
-              {% endif %}
-            </a>
+        {% if request.endpoint != 'cart' %}
+        <a href="{{ url_for('cart') }}" class="nav-link" aria-label="Cart" title="Cart">
+          <i class="fas fa-shopping-bag nav-icon"></i>
+          <span>Cart</span>
+          {% if cart_count and cart_count > 0 %}
+          <span class="badge">{{ cart_count }}</span>
           {% endif %}
+        </a>
+        {% endif %}
         {% else %}
-          <!-- Guest users -->
-          {% if request.endpoint != 'login' %}
-            <a href="{{ url_for('login') }}">
-              <svg class="icon icon-login" viewBox="0 0 24 24">
-                <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5z"/>
-                <path d="M20 19h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
-              </svg>
-              <span>Login</span>
-            </a>
-          {% endif %}
-          
-          {% if request.endpoint != 'register' %}
-            <a href="{{ url_for('register') }}">
-              <svg class="icon icon-user-plus" viewBox="0 0 24 24">
-                <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                <path d="M11 16v-2h2v2h2v2h-2v2h-2v-2H9v-2h2z"/>
-              </svg>
-              <span>Register</span>
-            </a>
-          {% endif %}
+        {% if request.endpoint != 'login' %}
+        <a href="{{ url_for('login') }}" class="nav-link" aria-label="Login" title="Login">
+          <i class="fas fa-sign-in-alt nav-icon"></i>
+          <span>Login</span>
+        </a>
+        {% endif %}
+
+        {% if request.endpoint != 'register' %}
+        <a href="{{ url_for('register') }}" class="nav-link" aria-label="Register" title="Register">
+          <i class="fas fa-user-plus nav-icon"></i>
+          <span>Register</span>
+        </a>
+        {% endif %}
         {% endif %}
       </nav>
     </div>
@@ -114,13 +901,28 @@
 
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-wrap container">
-        {% for cat, msg in messages %}
-          <div class="flash {{ cat }}">{{ msg }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
+  {% if messages %}
+  <div class="container flash-container">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">
+      {% if category == 'success' %}
+      <i class="fas fa-check-circle fa-lg"></i>
+      {% elif category == 'error' %}
+      <i class="fas fa-exclamation-circle fa-lg"></i>
+      {% elif category == 'warning' %}
+      <i class="fas fa-exclamation-triangle fa-lg"></i>
+      {% else %}
+      <i class="fas fa-info-circle fa-lg"></i>
+      {% endif %}
+      <span>{{ message }}</span>
+      <button class="alert-close"
+        style="margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
   {% endwith %}
 
   <!-- Main Content -->
@@ -129,54 +931,356 @@
   </main>
 
   <!-- Footer -->
-<footer class="footer">
-  <div class="container footer-wrap">
-    <!-- Brand Slogan Section -->
-    <div class="footer-slogan">
-      <h3>Forgot your bill? We didn't.</h3>
-      <p>Your face is your warranty — no paperwork, ever.</p>
-    </div>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>ShopEase</h3>
+          <p>Your face is your warranty — no paperwork, ever. Experience seamless shopping with advanced face
+            recognition technology.</p>
+          <div style="margin-top: 1.5rem;">
+            <a href="#" class="btn btn-outline" style="color: white; border-color: white;">Learn More</a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <p><a href="{{ url_for('index') }}">Home</a></p>
+          <p><a href="{{ url_for('categories') }}">Categories</a></p>
+          <p><a href="{{ url_for('search') }}">Search Products</a></p>
+          <p><a href="{{ url_for('profile') if me else url_for('login') }}">My Account</a></p>
+          <p><a href="{{ url_for('cart') if me else url_for('login') }}">Shopping Cart</a></p>
+        </div>
+
+        <div class="footer-section">
+          <h3>Contact Us</h3>
+          <p><i class="fas fa-envelope" style="color: var(--primary); margin-right: 0.5rem;"></i> support@shopease.com
+          </p>
+          <p><i class="fas fa-phone" style="color: var(--primary); margin-right: 0.5rem;"></i> +91 123-456-7890</p>
+          <p><i class="fas fa-map-marker-alt" style="color: var(--primary); margin-right: 0.5rem;"></i> 123 E-Commerce
+            St, Digital City</p>
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <a href="#" style="font-size: 1.25rem;"><i class="fab fa-facebook"></i></a>
+            <a href="#" style="font-size: 1.25rem;"><i class="fab fa-twitter"></i></a>
+            <a href="#" style="font-size: 1.25rem;"><i class="fab fa-instagram"></i></a>
+            <a href="#" style="font-size: 1.25rem;"><i class="fab fa-linkedin"></i></a>
+          </div>
+        </div>
+      </div>
 
       <div class="footer-features">
-        <span>Secure Shopping</span>
-        <span>Easy Returns</span>
-        <span>24/7 Support</span>
+        <div class="footer-feature">
+          <i class="fas fa-shield-alt"></i>
+          <span>Secure Shopping</span>
+          <small style="color: var(--gray-400); font-size: 0.8rem;">100% Safe & Secure</small>
+        </div>
+        <div class="footer-feature">
+          <i class="fas fa-truck-fast"></i>
+          <span>Fast Delivery</span>
+          <small style="color: var(--gray-400); font-size: 0.8rem;">Same Day Shipping</small>
+        </div>
+        <div class="footer-feature">
+          <i class="fas fa-undo-alt"></i>
+          <span>Easy Returns</span>
+          <small style="color: var(--gray-400); font-size: 0.8rem;">30-Day Return Policy</small>
+        </div>
+        <div class="footer-feature">
+          <i class="fas fa-headset"></i>
+          <span>24/7 Support</span>
+          <small style="color: var(--gray-400); font-size: 0.8rem;">Always Here to Help</small>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© {{ year }} ShopEase. All rights reserved. | <a href="#" style="color: var(--gray-300);">Privacy Policy</a>
+          | <a href="#" style="color: var(--gray-300);">Terms of Service</a></p>
       </div>
     </div>
-  </div>
-</footer>
-</body>
-</html>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Helper to update cart badge
-    function updateCartBadge(count) {
-        const badge = document.querySelector('.nav-link[href$="/cart"] .badge');
-        if (badge) {
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline';
-            } else {
-                badge.style.display = 'none';
-            }
-        } else {
-            // Create badge if missing
-            const cartLink = document.querySelector('.nav-link[href$="/cart"]');
-            if (cartLink && count > 0) {
-                const span = document.createElement('span');
-                span.className = 'badge bg-danger ms-1';
-                span.textContent = count;
-                cartLink.appendChild(span);
-            }
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Mark active navigation link
+      const currentUrl = window.location.pathname;
+      const navLinks = document.querySelectorAll('.nav-link');
+
+      navLinks.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        if (linkPath === currentUrl ||
+          (linkPath !== '/' && currentUrl.startsWith(linkPath)) ||
+          (linkPath === '/' && currentUrl === '/')) {
+          link.classList.add('active');
         }
+      });
+
+      // Close alert buttons
+      document.querySelectorAll('.alert-close').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const alert = this.closest('.alert');
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateX(100%)';
+          setTimeout(() => alert.remove(), 300);
+        });
+      });
+
+      // Auto-hide alerts after 5 seconds
+      setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+          if (!alert.querySelector('.alert-close')) {
+            alert.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateX(100%)';
+            setTimeout(() => alert.remove(), 500);
+          }
+        });
+      }, 5000);
+
+      // Add ripple effect to buttons
+      document.querySelectorAll('.btn, .nav-link').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          const ripple = document.createElement('span');
+          const rect = this.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          const x = e.clientX - rect.left - size / 2;
+          const y = e.clientY - rect.top - size / 2;
+
+          ripple.style.cssText = `
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            width: ${size}px;
+            height: ${size}px;
+            top: ${y}px;
+            left: ${x}px;
+            pointer-events: none;
+          `;
+
+          this.style.position = 'relative';
+          this.style.overflow = 'hidden';
+          this.appendChild(ripple);
+
+          setTimeout(() => ripple.remove(), 600);
+        });
+      });
+
+      // Add CSS for ripple animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes ripple {
+          to {
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    });
+
+    // Utility function to show notifications
+    function showNotification(message, type = 'info', duration = 5000) {
+      const container = document.querySelector('.flash-container') || document.body;
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.style.animation = 'slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      alert.style.marginBottom = '1rem';
+
+      let icon = 'info-circle';
+      if (type === 'success') icon = 'check-circle';
+      if (type === 'error') icon = 'exclamation-circle';
+      if (type === 'warning') icon = 'exclamation-triangle';
+
+      alert.innerHTML = `
+        <i class="fas fa-${icon} fa-lg"></i>
+        <span>${message}</span>
+        <button class="alert-close" style="margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+
+      container.appendChild(alert);
+
+      // Add close functionality
+      alert.querySelector('.alert-close').addEventListener('click', () => {
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateX(100%)';
+        setTimeout(() => alert.remove(), 300);
+      });
+
+      // Auto-remove
+      setTimeout(() => {
+        if (alert.parentNode) {
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateX(100%)';
+          setTimeout(() => alert.remove(), 300);
+        }
+      }, duration);
+
+      return alert;
     }
 
-    // Listen for cart changes triggered by AJAX
-    // You can hook into your existing AJAX success callbacks, e.g.:
-    // - after add-to-cart
-    // - after remove_from_cart
-    // - after update-cart
-    // Example for /add-to-cart (if using fetch/AJAX):
-    // (You'll need to integrate this into your frontend JS)
-});
-</script>
+    // Helper function to get CSRF token
+    function getCsrfToken() {
+      const csrfInput = document.querySelector('input[name="csrf_token"]');
+      return csrfInput ? csrfInput.value : '';
+    }
+
+    // Function to submit a POST request
+    function submitPostRequest(url, data) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+      form.style.display = 'none';
+
+      // Add CSRF token if available
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+      }
+
+      // Add data fields
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = data[key];
+          form.appendChild(input);
+        }
+      }
+
+      // Submit the form
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    // Export utility functions
+    window.ShopEase = {
+      showNotification,
+      updateCartBadge: function (count) {
+        const cartLink = document.querySelector('.nav-link[href$="/cart"]');
+        if (cartLink) {
+          let badge = cartLink.querySelector('.badge');
+          if (count > 0) {
+            if (!badge) {
+              badge = document.createElement('span');
+              badge.className = 'badge';
+              cartLink.appendChild(badge);
+            }
+            badge.textContent = count;
+          } else if (badge) {
+            badge.remove();
+          }
+        }
+      },
+
+      // SIMPLE AND RELIABLE CART FUNCTIONS
+      addToCart: function (productId, quantity = 1) {
+        // Show loading notification
+        this.showNotification('Adding to cart...', 'info');
+
+        // Get the current page's base URL
+        const baseUrl = window.location.origin;
+
+        // Try to submit via AJAX first
+        fetch('/cart/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            quantity: quantity,
+            csrf_token: getCsrfToken()
+          })
+        })
+          .then(response => {
+            if (response.ok) {
+              return response.json().then(data => {
+                if (data.success) {
+                  this.showNotification('Product added to cart!', 'success');
+                  this.updateCartBadge(data.cart_count || 1);
+                  // If we're on the cart page, refresh it
+                  if (window.location.pathname.includes('/cart')) {
+                    window.location.reload();
+                  }
+                } else {
+                  this.showNotification(data.message || 'Failed to add to cart', 'error');
+                }
+              });
+            } else {
+              // If AJAX fails, try the traditional form submission
+              this.addToCartFallback(productId, quantity);
+            }
+          })
+          .catch(error => {
+            console.error('AJAX Error:', error);
+            // Fallback to traditional form submission
+            this.addToCartFallback(productId, quantity);
+          });
+      },
+
+      // Fallback method using form submission
+      addToCartFallback: function (productId, quantity) {
+        submitPostRequest('/add_to_cart/' + productId, { qty: quantity });
+      },
+
+      // Remove item from cart
+      removeFromCart: function (productId) {
+        if (!confirm('Are you sure you want to remove this item from your cart?')) {
+          return;
+        }
+
+        submitPostRequest('/remove_from_cart/' + productId, {});
+      },
+
+      // Update cart quantity
+      updateCartQuantity: function (productId, quantity) {
+        submitPostRequest('/update_cart/' + productId, { qty: quantity });
+      },
+
+      // Simple one-click add to cart
+      addToCartSimple: function (productId) {
+        this.addToCart(productId, 1);
+      },
+
+      // Add to cart with quantity from input field
+      addToCartWithQuantity: function (productId, quantityInputId) {
+        const quantityInput = document.getElementById(quantityInputId);
+        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+
+        if (isNaN(quantity) || quantity < 1) {
+          this.showNotification('Please enter a valid quantity', 'error');
+          return;
+        }
+
+        // Show loading state on the button if it exists
+        const addButton = document.querySelector('[data-product-id="' + productId + '"]');
+        if (addButton) {
+          const originalText = addButton.innerHTML;
+          addButton.innerHTML = '<span class="spinner"></span> Adding...';
+          addButton.disabled = true;
+
+          // Add to cart
+          this.addToCart(productId, quantity);
+
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            addButton.innerHTML = originalText;
+            addButton.disabled = false;
+          }, 2000);
+        } else {
+          this.addToCart(productId, quantity);
+        }
+      }
+    };
+  </script>
+</body>
+
+</html>

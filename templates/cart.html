@@ -1,280 +1,322 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container">
-  <h2 class="section-title">Your Cart</h2>
-  <form id="cart-form">
-    <div class="table-wrap cart-table">
-      <table>
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Qty</th>
-            <th>Total</th>
-            <th>Warranty</th> <!-- New column header -->
-            <th>Extend Warranty</th> <!-- New column header -->
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="cart-body">
-          {% for it in items %}
-            <tr data-id="{{ it.product.id }}" data-price="{{ "%.2f"|format(it.product.price) }}">
-              <td>{{ it.product.name }}</td>
-              <td>₹{{ "%.2f"|format(it.product.price) }}</td>
-              <td>
-                <input type="number" class="qty-input"
-                       name="qty_{{ it.product.id }}"
-                       data-id="{{ it.product.id }}"
-                       min="0" value="{{ it.qty }}">
-              </td>
-              <td class="line-total">₹{{ "%.2f"|format(it.line_total) }}</td>
-              <!-- New Warranty Column -->
-              <td>
-                {% if it.product.warranty_years %}
-                  {{ it.product.warranty_years }} year{% if it.product.warranty_years != 1 %}s{% endif %}
-                {% else %}
-                  <span class="muted">No Warranty</span>
-                {% endif %}
-              </td>
-              <!-- New Extend Warranty Column -->
-              <td>
-                {% if it.product.warranty_years %}
-                  <select class="warranty-extend-select" data-product-id="{{ it.product.id }}">
-                    <option value="0" selected>Extend by (yrs)</option>
-                    <option value="1">+1 Year</option>
-                    <option value="2">+2 Years</option>
-                    <option value="3">+3 Years</option>
-                    <!-- Add more options as needed -->
-                  </select>
-                  <!-- Hidden input to store the selected extension value -->
-                  <input type="hidden" name="warranty_extension_{{ it.product.id }}" value="0" class="warranty-extension-value">
-                {% else %}
-                  <span class="muted">N/A</span>
-                {% endif %}
-              </td>
-              <td>
-                <button type="button" class="btn outline remove-btn" data-id="{{ it.product.id }}">❌ Remove</button>
-              </td>
-            </tr>
-          {% else %}
-            <tr><td colspan="7"><small class="muted">Cart is empty.</small></td></tr> <!-- Updated colspan -->
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- Page Header -->
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; color: var(--dark); margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">
+      <i class="fas fa-shopping-cart" style="color: var(--primary); margin-right: 0.5rem;"></i>
+      Your Shopping Cart
+    </h1>
+    <p style="color: var(--gray-600);">Review and manage your items</p>
+  </div>
 
-      <div class="cart-actions">
-        <div class="subtotal">
-          <strong>Subtotal:</strong> ₹<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span>
+  {% if items %}
+  <!-- Cart Items -->
+  <div class="cart-container"
+    style="background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 2rem;">
+    <!-- Cart Header -->
+    <div class="cart-header"
+      style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; padding: 1.5rem; background: var(--gray-100); border-bottom: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-800);">
+      <div>Product</div>
+      <div>Price</div>
+      <div>Quantity</div>
+      <div>Warranty</div>
+      <div>Total</div>
+    </div>
+
+    <!-- Cart Items -->
+    <div id="cart-body">
+      {% for it in items %}
+      <div class="cart-item" data-id="{{ it.product.id }}"
+        style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; padding: 1.5rem; align-items: center; border-bottom: 1px solid var(--gray-200);">
+        <!-- Product Info -->
+        <div class="product-info" style="display: flex; align-items: center; gap: 1rem;">
+          {% if it.product.image_url %}
+          <img src="{{ it.product.image_url }}" alt="{{ it.product.name }}"
+            style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius);">
+          {% else %}
+          <div
+            style="width: 80px; height: 80px; background: var(--gray-100); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: var(--gray-400);">
+            <i class="fas fa-image fa-2x"></i>
+          </div>
+          {% endif %}
+          <div>
+            <h3 style="font-weight: 600; margin-bottom: 0.25rem; color: var(--dark);">{{ it.product.name }}</h3>
+            <p style="color: var(--gray-600); font-size: 0.875rem;">{{ it.product.category_name }}</p>
+          </div>
         </div>
-        <div>
-          <a class="btn" href="{{ url_for('checkout') }}">Checkout</a>
+
+        <!-- Price -->
+        <div class="price" style="font-weight: 600; color: var(--dark);">
+          ₹{{ "%.2f"|format(it.product.price) }}
+        </div>
+
+        <!-- Quantity -->
+        <div class="quantity-controls">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button type="button" class="qty-decrease" data-id="{{ it.product.id }}"
+              style="width: 32px; height: 32px; border: 1px solid var(--gray-300); background: white; border-radius: var(--radius); cursor: pointer;">
+              <i class="fas fa-minus"></i>
+            </button>
+            <input type="number" class="qty-input" name="qty_{{ it.product.id }}" data-id="{{ it.product.id }}" min="1"
+              value="{{ it.qty }}"
+              style="width: 60px; text-align: center; padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius);">
+            <button type="button" class="qty-increase" data-id="{{ it.product.id }}"
+              style="width: 32px; height: 32px; border: 1px solid var(--gray-300); background: white; border-radius: var(--radius); cursor: pointer;">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Warranty -->
+        <div class="warranty-info">
+          {% if it.product.warranty_years %}
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="badge"
+              style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+              {{ it.product.warranty_years }} Year{% if it.product.warranty_years != 1 %}s{% endif %}
+            </span>
+            <select class="warranty-extend-select" data-product-id="{{ it.product.id }}"
+              style="padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 0.875rem;">
+              <option value="0">Extend</option>
+              <option value="1">+1 Year</option>
+              <option value="2">+2 Years</option>
+              <option value="3">+3 Years</option>
+            </select>
+          </div>
+          {% else %}
+          <span style="color: var(--gray-500); font-size: 0.875rem;">No warranty</span>
+          {% endif %}
+        </div>
+
+        <!-- Total -->
+        <div class="item-total" style="font-weight: 700; color: var(--dark);">
+          ₹{{ "%.2f"|format(it.line_total) }}
+        </div>
+
+        <!-- Remove Button -->
+        <div class="remove-action" style="position: absolute; right: 1.5rem;">
+          <button type="button" class="remove-btn" data-id="{{ it.product.id }}"
+            style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.5rem;">
+            <i class="fas fa-trash"></i>
+          </button>
         </div>
       </div>
+      {% endfor %}
     </div>
-  </form>
+
+    <!-- Empty Cart State -->
+    <div id="empty-cart" style="display: none; padding: 3rem; text-align: center; color: var(--gray-600);">
+      <i class="fas fa-shopping-cart fa-3x" style="margin-bottom: 1rem; opacity: 0.3;"></i>
+      <h3 style="margin-bottom: 0.5rem;">Your cart is empty</h3>
+      <p>Add some products to get started!</p>
+      <a href="{{ url_for('index') }}" class="btn-primary"
+        style="display: inline-block; margin-top: 1rem; background: var(--primary); color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius); text-decoration: none; font-weight: 600;">
+        Continue Shopping
+      </a>
+    </div>
+  </div>
+
+  <!-- Cart Summary -->
+  <div class="cart-summary"
+    style="background: white; border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.25rem; color: var(--dark);">Order Summary</h3>
+      <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
+        ₹<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--gray-100); border-radius: var(--radius);">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        <span style="color: var(--gray-600);">Subtotal</span>
+        <span style="font-weight: 600;">₹<span id="summary-subtotal">{{ "%.2f"|format(subtotal) }}</span></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        <span style="color: var(--gray-600);">Shipping</span>
+        <span style="font-weight: 600;">Free</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 1.125rem;">
+        <span style="font-weight: 600;">Total</span>
+        <span style="font-weight: 700; color: var(--primary);">₹<span id="summary-total">{{ "%.2f"|format(subtotal)
+            }}</span></span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+      <a href="{{ url_for('checkout') }}" class="btn-primary"
+        style="flex: 1; display: block; background: var(--primary); color: white; padding: 1rem; border-radius: var(--radius); text-decoration: none; text-align: center; font-weight: 600; transition: background 0.2s;">
+        Proceed to Checkout
+        <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+      </a>
+      <a href="{{ url_for('index') }}" class="btn-secondary"
+        style="flex: 1; display: block; background: var(--gray-100); color: var(--dark); padding: 1rem; border-radius: var(--radius); text-decoration: none; text-align: center; font-weight: 600; transition: background 0.2s;">
+        Continue Shopping
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <!-- Empty Cart -->
+  <div style="text-align: center; padding: 4rem 2rem;">
+    <div
+      style="width: 120px; height: 120px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--gray-400);">
+      <i class="fas fa-shopping-cart fa-3x"></i>
+    </div>
+    <h2 style="font-size: 1.75rem; color: var(--dark); margin-bottom: 1rem;">Your cart is empty</h2>
+    <p style="color: var(--gray-600); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+      Looks like you haven't added any items to your cart yet.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn-primary"
+      style="display: inline-block; background: var(--primary); color: white; padding: 1rem 2rem; border-radius: var(--radius); text-decoration: none; font-weight: 600; transition: transform 0.2s;">
+      Start Shopping
+      <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+    </a>
+  </div>
+  {% endif %}
 </div>
 
-<script>
-// Debounce helper
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
-    const ctx = this;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(ctx, args), wait);
-  };
-}
-
-// Utility: format number as fixed 2-decimal string
-function fmt(n) {
-  return Number(n).toFixed(2);
-}
-
-// Safely update the "cart empty" placeholder if no rows remain
-function ensureEmptyPlaceholder() {
-  const tbody = document.getElementById("cart-body");
-  const rows = tbody.querySelectorAll("tr");
-  // count only real product rows (they have data-id)
-  const productRows = Array.from(rows).filter(r => r.dataset && r.dataset.id);
-  if (productRows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><small class="muted">Cart is empty.</small></td></tr>'; // Updated colspan
-  }
-}
-
-// Send single-qty update to server (server accepts form fields like qty_<id>)
-async function sendQtyUpdate(productId, qty) {
-  const formData = new FormData();
-  formData.append(`qty_${productId}`, qty);
-
-  const res = await fetch("{{ url_for('update_cart') }}", {
-    method: "POST",
-    body: formData,
-    credentials: "same-origin"
-  });
-  if (!res.ok) throw new Error("Network response was not ok");
-  return res.json();
-}
-
-// Send remove request (server supports form or JSON)
-async function sendRemove(productId) {
-  const formData = new FormData();
-  formData.append("product_id", productId);
-
-  const res = await fetch("{{ url_for('remove_from_cart') }}", {
-    method: "POST",
-    body: formData,
-    credentials: "same-origin"
-  });
-  if (!res.ok) throw new Error("Network response was not ok");
-  return res.json();
-}
-
-// Handler for qty change (debounced)
-const handleQtyChange = debounce(async function (inputEl) {
-  try {
-    const productId = inputEl.dataset.id;
-    let qty = parseInt(inputEl.value, 10);
-    if (isNaN(qty) || qty < 0) qty = 0;
-    inputEl.value = qty; // enforce non-negative
-
-    // Optimistically update line total locally using data-price
-    const row = inputEl.closest("tr");
-    const price = parseFloat(row.dataset.price || 0);
-    const newLineTotal = (price * qty);
-    row.querySelector('.line-total').textContent = '₹' + fmt(newLineTotal);
-
-    // Send update to server
-    const data = await sendQtyUpdate(productId, qty);
-    if (data && data.success) {
-      // Update subtotal using server value (authoritative)
-      const subtotalEl = document.querySelector("#subtotal");
-      subtotalEl.textContent = fmt(data.subtotal || 0);
-
-      // If qty is 0 and server accepted removal, remove the row
-      if (qty === 0) {
-        // Small delay for smoothness
-        setTimeout(() => {
-          row.remove();
-          ensureEmptyPlaceholder();
-        }, 150);
-      }
-    } else {
-      // revert or inform user
-      alert("Failed to update cart on server.");
-      // Optionally you could reload to keep things consistent:
-      // location.reload();
-    }
-  } catch (err) {
-    console.error("Auto-update error:", err);
-    alert("Network error while updating cart. Please try again.");
-  }
-}, 400); // 400ms debounce
-
-// Handler for warranty extension change
-function handleWarrantyChange(selectEl) {
-  const productId = selectEl.dataset.productId;
-  const selectedValue = parseInt(selectEl.value, 10) || 0;
-  const hiddenInput = selectEl.parentElement.querySelector('.warranty-extension-value');
-  if (hiddenInput) {
-    hiddenInput.value = selectedValue;
-  }
-  console.log(`Warranty extension selected for product ${productId}: +${selectedValue} years`);
-  // Send an AJAX request to update the session/cart with the extension value
-  sendWarrantyExtensionUpdate(productId, selectedValue);
-}
-
-// Send warranty extension update to server
-async function sendWarrantyExtensionUpdate(productId, extensionYears) {
-    const formData = new FormData();
-    formData.append(`warranty_extension_${productId}`, extensionYears);
-
-    try {
-        const res = await fetch("{{ url_for('update_cart') }}", { // Reuse update_cart
-            method: "POST",
-            body: formData,
-            credentials: "same-origin"
-        });
-        if (!res.ok) {
-            throw new Error(`Network response was not ok: ${res.status}`);
-        }
-        const data = await res.json();
-        if (!data.success) {
-            throw new Error(`Server error: ${data.error || 'Unknown error'}`);
-        }
-        console.log(`Warranty extension for product ${productId} updated to +${extensionYears} years on server.`);
-    } catch (err) {
-        console.error("Warranty extension update error:", err);
-        // Optionally, revert the select value or show an alert
-        alert(`Failed to update warranty extension: ${err.message}. Changes might not be saved.`);
-    }
-}
-
-
-// Event delegation: listen on tbody for qty input changes, remove button clicks, and warranty select changes
-document.getElementById("cart-body").addEventListener("input", function (e) {
-  // handle number input as user types
-  const target = e.target;
-  if (target.matches(".qty-input")) {
-    handleQtyChange(target);
-  }
-});
-
-document.getElementById("cart-body").addEventListener("change", function (e) {
-  const target = e.target;
-  // Handle qty change (e.g., when user uses spinner or finishes editing)
-  if (target.matches(".qty-input")) {
-    handleQtyChange(target);
-  }
-  // Handle warranty extension change
-  if (target.matches(".warranty-extend-select")) {
-    handleWarrantyChange(target);
-  }
-});
-
-document.getElementById("cart-body").addEventListener("click", async function (e) {
-  const btn = e.target.closest(".remove-btn");
-  if (!btn) return;
-  e.preventDefault();
-
-  const productId = btn.dataset.id;
-  if (!productId) return;
-
-  // optional: confirm
-  if (!confirm("Remove this item from the cart?")) return;
-
-  try {
-    const data = await sendRemove(productId);
-    if (data && data.success) {
-      const row = document.querySelector(`tr[data-id='${productId}']`);
-      if (row) row.remove();
-
-      // update subtotal
-      const subtotalEl = document.querySelector("#subtotal");
-      subtotalEl.textContent = fmt(data.subtotal || 0);
-
-      ensureEmptyPlaceholder();
-    } else {
-      alert("Failed to remove item from cart.");
-    }
-  } catch (err) {
-    console.error("Remove error:", err);
-    alert("Network error while removing item. Please try again.");
-  }
-});
-</script>
-
 <style>
-  /* Optional: Add some basic styling for the warranty select */
-  .warranty-extend-select {
-    width: 100%;
-    padding: 4px 6px;
-    border: 1px solid var(--outline);
-    border-radius: 4px;
-    font-size: 0.9em;
+  .cart-item:hover {
+    background: var(--gray-50);
   }
-  .warranty-extend-select:focus {
-    outline: none;
-    border-color: var(--brand);
+
+  .btn-primary:hover {
+    background: var(--primary-dark) !important;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary:hover {
+    background: var(--gray-200) !important;
+  }
+
+  .qty-decrease:hover,
+  .qty-increase:hover {
+    background: var(--gray-100);
+  }
+
+  .remove-btn:hover {
+    color: var(--danger-dark) !important;
+  }
+
+  @media (max-width: 768px) {
+    .cart-header {
+      display: none !important;
+    }
+
+    .cart-item {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+      position: relative;
+      padding-bottom: 3rem !important;
+    }
+
+    .remove-action {
+      position: absolute !important;
+      bottom: 1rem !important;
+      right: 1.5rem !important;
+    }
   }
 </style>
+
+<script>
+  // Cart functionality (simplified version)
+  document.addEventListener('DOMContentLoaded', function () {
+    // Quantity controls
+    document.querySelectorAll('.qty-decrease').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const productId = this.dataset.id;
+        const input = document.querySelector(`.qty-input[data-id="${productId}"]`);
+        if (input.value > 1) {
+          input.value = parseInt(input.value) - 1;
+          updateCartItem(productId, input.value);
+        }
+      });
+    });
+
+    document.querySelectorAll('.qty-increase').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const productId = this.dataset.id;
+        const input = document.querySelector(`.qty-input[data-id="${productId}"]`);
+        input.value = parseInt(input.value) + 1;
+        updateCartItem(productId, input.value);
+      });
+    });
+
+    // Remove item
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const productId = this.dataset.id;
+        if (confirm('Remove this item from cart?')) {
+          removeCartItem(productId);
+        }
+      });
+    });
+
+    // Warranty extension
+    document.querySelectorAll('.warranty-extend-select').forEach(select => {
+      select.addEventListener('change', function () {
+        const productId = this.dataset.productId;
+        const years = this.value;
+        if (years > 0) {
+          alert(`Warranty extended by ${years} year${years != 1 ? 's' : ''} for product ID: ${productId}`);
+          // Here you would typically make an API call
+        }
+      });
+    });
+
+    function updateCartItem(productId, quantity) {
+      // Simulate API call
+      const item = document.querySelector(`.cart-item[data-id="${productId}"]`);
+      if (item) {
+        const price = parseFloat(item.querySelector('.price').textContent.replace('₹', ''));
+        const total = price * quantity;
+        item.querySelector('.item-total').textContent = '₹' + total.toFixed(2);
+
+        // Update totals
+        updateCartTotals();
+
+        // Show loading state
+        const button = item.querySelector('.qty-input');
+        button.disabled = true;
+        setTimeout(() => button.disabled = false, 500);
+      }
+    }
+
+    function removeCartItem(productId) {
+      const item = document.querySelector(`.cart-item[data-id="${productId}"]`);
+      if (item) {
+        item.style.transition = 'opacity 0.3s, transform 0.3s';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-20px)';
+
+        setTimeout(() => {
+          item.remove();
+          updateCartTotals();
+          checkEmptyCart();
+        }, 300);
+      }
+    }
+
+    function updateCartTotals() {
+      let subtotal = 0;
+      document.querySelectorAll('.item-total').forEach(el => {
+        subtotal += parseFloat(el.textContent.replace('₹', ''));
+      });
+
+      document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+      document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2);
+      document.getElementById('summary-total').textContent = subtotal.toFixed(2);
+    }
+
+    function checkEmptyCart() {
+      const items = document.querySelectorAll('.cart-item');
+      if (items.length === 0) {
+        document.getElementById('cart-body').style.display = 'none';
+        document.getElementById('empty-cart').style.display = 'block';
+        document.querySelector('.cart-summary').style.display = 'none';
+      }
+    }
+  });
+</script>
 {% endblock %}

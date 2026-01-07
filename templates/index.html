@@ -1,35 +1,974 @@
+<!-- index.html - Premium Modern Homepage -->
 {% extends "base.html" %}
-{% block content %}
 
-<section class="container">
-  <h2 class="section-title">Featured</h2>
-  <div class="grid">
+{% block content %}
+<div class="container">
+  <!-- Animated Hero Banner -->
+  <div class="hero-banner">
+    <div class="hero-bg-animation"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Welcome to <span class="gradient-text">ShopEase</span></h1>
+      <p class="hero-subtitle">Discover amazing products with cutting-edge face-recognition warranty technology</p>
+      <a href="{{ url_for('categories') }}" class="hero-btn">
+        Shop Now
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Featured Products -->
+  <div class="section-header">
+    <h2 class="section-title">
+      <i class="fas fa-star section-icon"></i>
+      Featured Products
+    </h2>
+    <a href="{{ url_for('categories') }}" class="view-all-link">
+      View All <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+  <!-- Product Grid -->
+  <div class="product-grid">
     {% for p in featured %}
-      <div class="card">
-        <!-- ✅ keep everything inside form -->
-        <form action="{{ url_for('add_to_cart', product_id=p.id, product_name=p.name) }}" method="post" class="form-inline">
-          <img src="{{ p.image_url }}" alt="{{ p.name }}">
-          <div class="card-body">
-            <h3>{{ p.name }}</h3>
-            <p class="muted">{{ p.category_name }}</p>
-            <p class="price">₹{{ "%.2f"|format(p.price) }}</p>
-      
-            <!-- Inside product card -->
-            <div class="card-actions">
-            <form method="POST" action="{{ url_for('add_to_cart', product_id=p.id) }}" style="display:inline;">
-            <input type="number" name="qty" value="1" min="1" style="width:60px;">
-            <button type="submit" class="btn">Add to Cart</button>
-             </form>
-  
-               {% if me %}
-              <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" style="display:inline;">
-               <button type="submit" class="btn btn-outline">♡ Wishlist</button>
-              </form>
-             {% endif %}
-          </div>
-          </div>
-        </form>
+    <div class="product-card" data-aos="fade-up">
+      <!-- Product Image -->
+      <div class="product-image-wrapper">
+        <img src="{{ p.image_url }}" alt="{{ p.name }}" class="product-image">
+        <div class="product-badges">
+          {% if p.warranty_years and p.warranty_years > 0 %}
+          <span class="warranty-badge">
+            <i class="fas fa-shield-alt"></i>
+            {{ p.warranty_years }}Y Warranty
+          </span>
+          {% endif %}
+        </div>
+        <!-- Quick View Button - now appears at bottom right corner -->
+        <div class="quick-view-container">
+          <button class="quick-view-btn" title="Quick View">
+            <i class="fas fa-eye"></i> Quick View
+          </button>
+        </div>
       </div>
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <div class="product-category">{{ p.category_name }}</div>
+        <h3 class="product-title">{{ p.name }}</h3>
+        <div class="product-price-wrapper">
+          <span class="product-price">₹{{ "%.2f"|format(p.price) }}</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="product-actions">
+          <form method="POST" action="{{ url_for('add_to_cart', product_id=p.id) }}" style="flex: 1;">
+            <button type="submit" class="add-to-cart-btn">
+              <i class="fas fa-cart-plus"></i>
+              <span>Add to Cart</span>
+            </button>
+          </form>
+
+          {% if me %}
+          <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" class="wishlist-form">
+            <button type="submit" class="wishlist-btn" title="Add to Wishlist">
+              <i class="fas fa-heart"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-box-open"></i>
+      <h3>No featured products available</h3>
+      <p>Check back soon for new arrivals!</p>
+    </div>
     {% endfor %}
   </div>
+
+  <!-- Categories Section -->
+  <div class="section-header" style="margin-top: 4rem;">
+    <h2 class="section-title">
+      <i class="fas fa-th-large section-icon"></i>
+      Shop by Category
+    </h2>
+  </div>
+
+  <div class="categories-grid">
+    {% for c in categories %}
+    <a href="{{ url_for('category', slug=c.slug) }}" class="category-card" data-aos="zoom-in">
+      <div class="category-icon-wrapper">
+        <i
+          class="fas fa-{{ 'mobile-alt' if 'electronics' in c.name.lower() else 'home' if 'home' in c.name.lower() else 'tshirt' if 'fashion' in c.name.lower() else 'utensils' if 'kitchen' in c.name.lower() else 'box' }}"></i>
+      </div>
+      <h3>{{ c.name }}</h3>
+      <p>Explore Now <i class="fas fa-arrow-right"></i></p>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Features Section -->
+  <div class="features-section">
+    <h2 class="features-title">Why Choose <span class="gradient-text">ShopEase</span>?</h2>
+    <div class="features-grid">
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-icon purple">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <h3>Face Recognition Warranty</h3>
+        <p>No paperwork needed. Your face is your warranty claim verification.</p>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-icon green">
+          <i class="fas fa-shipping-fast"></i>
+        </div>
+        <h3>Fast Delivery</h3>
+        <p>Quick and reliable shipping to your doorstep within 2-3 business days.</p>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-icon blue">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h3>Secure Shopping</h3>
+        <p>Your data is protected with bank-level encryption and security.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Hero Banner Styles */
+  .hero-banner {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: var(--radius-xl);
+    padding: 5rem 3rem;
+    margin-bottom: 4rem;
+    text-align: center;
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+  }
+
+  .hero-bg-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1.5rem;
+    font-family: 'Poppins', sans-serif;
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.35rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2.5rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  .hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2.5rem;
+    background: white;
+    color: #667eea;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .hero-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Section Headers */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid var(--border-color);
+  }
+
+  .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-icon {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .view-all-link {
+    color: var(--primary-solid);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .view-all-link:hover {
+    transform: translateX(5px);
+    text-decoration: underline;
+  }
+
+  /* Product Grid - Changed to 4 products per row */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.75rem;
+    margin-bottom: 4rem;
+  }
+
+  @media (min-width: 1400px) {
+    .product-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1399px) {
+    .product-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .product-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Enhanced Product Card Hover Effects */
+  .product-card {
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    position: relative;
+    cursor: pointer;
+  }
+
+  /* Subtle initial hover effect */
+  .product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-solid);
+  }
+
+  /* Enhanced hover effect with glow */
+  .product-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #667eea);
+    background-size: 400% 400%;
+    border-radius: var(--radius-lg);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: borderGlow 3s ease-in-out infinite;
+  }
+
+  .product-card:hover::before {
+    opacity: 0.5;
+  }
+
+  @keyframes borderGlow {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .product-image-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.6s ease;
+    filter: brightness(1);
+  }
+
+  /* Enhanced image zoom and filter on hover - NO OVERLAY */
+  .product-card:hover .product-image {
+    transform: scale(1.08);
+    filter: brightness(1.05);
+  }
+
+  /* Quick View Container - positioned at bottom right */
+  .quick-view-container {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 3;
+  }
+
+  .quick-view-btn {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary-solid);
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transform: translateX(20px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .product-card:hover .quick-view-btn {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .quick-view-btn:hover {
+    background: white;
+    transform: translateX(0) scale(1.05);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  }
+
+  .product-badges {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 2;
+  }
+
+  .warranty-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 0.4rem 0.9rem;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+  }
+
+  .product-card:hover .warranty-badge {
+    transform: scale(1);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6);
+  }
+
+  .product-info {
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Add subtle background wave effect on hover */
+  .product-info::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.05), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .product-card:hover .product-info::after {
+    left: 100%;
+  }
+
+  .product-category {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  .product-card:hover .product-category {
+    color: var(--primary-solid);
+  }
+
+  .product-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    height: 2.8rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color 0.3s ease;
+  }
+
+  .product-card:hover .product-title {
+    color: #667eea;
+  }
+
+  .product-price-wrapper {
+    margin-bottom: 1.25rem;
+  }
+
+  .product-price {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+  }
+
+  .product-card:hover .product-price {
+    background: linear-gradient(135deg, #f093fb, #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .product-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .add-to-cart-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 0.85rem 1.25rem;
+    border-radius: var(--radius);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    font-size: 0.95rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Add ripple effect to button */
+  .add-to-cart-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+  }
+
+  .add-to-cart-btn:hover::after {
+    animation: ripple 1s ease-out;
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0, 0);
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: scale(20, 20);
+      opacity: 0;
+    }
+  }
+
+  .add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+  }
+
+  .wishlist-btn {
+    background: var(--bg-tertiary);
+    color: #ef4444;
+    border: 2px solid var(--border-color);
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .wishlist-btn:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-color: #ef4444;
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+  }
+
+  .wishlist-form {
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-tertiary);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.4;
+  }
+
+  /* Categories Grid - Enhanced hover effects */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+
+  .category-card {
+    position: relative;
+    background: var(--bg-primary);
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: all 0.4s ease;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+
+  .category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .category-card:hover::before {
+    opacity: 0.1;
+  }
+
+  .category-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-solid);
+  }
+
+  .category-icon-wrapper {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    color: white;
+    font-size: 2rem;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    transition: all 0.4s ease;
+    overflow: hidden;
+  }
+
+  .category-card:hover .category-icon-wrapper {
+    transform: scale(1.1) rotate(360deg);
+    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
+  }
+
+  .category-card h3 {
+    position: relative;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+
+  .category-card:hover h3 {
+    color: #667eea;
+  }
+
+  .category-card p {
+    position: relative;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .category-card:hover p {
+    color: var(--primary-solid);
+    transform: translateX(5px);
+  }
+
+  /* Features Section */
+  .features-section {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    padding: 4rem 3rem;
+    border-radius: var(--radius-xl);
+    text-align: center;
+    margin-top: 4rem;
+  }
+
+  [data-theme="dark"] .features-section {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  }
+
+  .features-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 3rem;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .feature-card {
+    background: var(--bg-primary);
+    padding: 2.5rem 2rem;
+    border-radius: var(--radius-lg);
+    transition: all 0.4s ease;
+    box-shadow: var(--shadow);
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 25px 50px rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-solid);
+  }
+
+  .feature-icon {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 2.25rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transition: all 0.4s ease;
+  }
+
+  .feature-icon.purple {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+
+  .feature-icon.green {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
+  .feature-icon.blue {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+  }
+
+  .feature-card:hover .feature-icon {
+    transform: scale(1.15) rotate(360deg);
+    box-shadow: 0 20px 35px rgba(0, 0, 0, 0.25);
+  }
+
+  .feature-card h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+  }
+
+  .feature-card:hover h3 {
+    color: #667eea;
+  }
+
+  .feature-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    transition: color 0.3s ease;
+  }
+
+  .feature-card:hover p {
+    color: var(--text-primary);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2.25rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+    }
+
+    .features-title {
+      font-size: 1.75rem;
+    }
+
+    /* Reduce hover effects on mobile for performance */
+    .product-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .category-card:hover {
+      transform: translateY(-4px) scale(1.01);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .quick-view-btn {
+      padding: 0.5rem 0.8rem;
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Custom cursor for product cards */
+  .product-card {
+    cursor: pointer;
+  }
+
+  .category-card {
+    cursor: pointer;
+  }
+
+  .feature-card {
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Add to cart button animation
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+    addToCartButtons.forEach(button => {
+      button.addEventListener('click', function (e) {
+        e.stopPropagation(); // Prevent triggering card hover effects
+        const originalContent = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
+        this.disabled = true;
+        this.style.opacity = '0.7';
+
+        setTimeout(() => {
+          this.innerHTML = originalContent;
+          this.disabled = false;
+          this.style.opacity = '1';
+        }, 2000);
+      });
+    });
+
+    // Quick view button functionality
+    const quickViewButtons = document.querySelectorAll('.quick-view-btn');
+    quickViewButtons.forEach(button => {
+      button.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Add animation
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        this.disabled = true;
+
+        // Simulate quick view action
+        setTimeout(() => {
+          this.innerHTML = originalText;
+          this.disabled = false;
+          alert('Quick view feature coming soon!');
+        }, 1000);
+      });
+    });
+
+    // Add click event to product cards for better UX
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+      card.addEventListener('click', function (e) {
+        // Don't trigger if clicking on buttons or links
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' ||
+          e.target.closest('button') || e.target.closest('a')) {
+          return;
+        }
+
+        // Add visual feedback
+        this.style.transform = 'translateY(-4px) scale(1.01)';
+        setTimeout(() => {
+          this.style.transform = 'translateY(-8px)';
+        }, 150);
+
+        // Navigate to product detail (you can implement this)
+        console.log('Navigate to product detail page');
+      });
+    });
+
+    // Scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.product-card, .category-card, .feature-card').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'all 0.6s ease';
+      observer.observe(el);
+    });
+
+    // Image error handling for product images
+    document.querySelectorAll('.product-image').forEach(img => {
+      img.onerror = function () {
+        this.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23f8f9fa"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="%236c757d">No Image Available</text></svg>';
+      };
+    });
+
+    // Add touch feedback for mobile devices
+    document.querySelectorAll('.product-card, .category-card, .feature-card').forEach(card => {
+      card.addEventListener('touchstart', function () {
+        this.classList.add('touch-active');
+      });
+
+      card.addEventListener('touchend', function () {
+        this.classList.remove('touch-active');
+      });
+    });
+  });
+</script>
 {% endblock %}

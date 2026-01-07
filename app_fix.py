@@ -38,12 +38,12 @@ app = Flask(__name__)
 app.secret_key = "your-super-secret-key-for-lan-dev-12345"  # CHANGE THIS IF YOU WANT
 
 # --- EMAIL CONFIG (Optional — Disabled by default for LAN) ---
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
-app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False') == 'True'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'rtobvn8191@gmail.com')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'udxzckxybkkmqxfa') # Use app password if 2FA is enabled
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com') 
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587)) 
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True' 
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False') == 'True' 
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'rtobvn8191@gmail.com') 
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'udxzckxybkkmqxfa') # Use app password if 2FA is enabled 
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', app.config['MAIL_USERNAME'])
 
 # Force UTF-8 for outgoing messages
@@ -525,6 +525,64 @@ def send_warranty_expiration_reminders():
         app.logger.exception("Error in send_warranty_expiration_reminders(): %s", e)
         return 0, -1
 
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    products = fetchall(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p JOIN categories c ON c.id=p.category_id ORDER BY p.created_at DESC"
+    )
+    cats = fetchall("SELECT * FROM categories ORDER BY name")
+    return render_template("admin_dashboard.html", products=products, categories=cats)
+
+@app.route("/admin/product/new", methods=["POST"])
+@admin_required
+def admin_product_new():
+    name = request.form.get("name", "").strip()
+    description = request.form.get("description", "").strip()
+    price = Decimal(request.form.get("price", "0") or "0")
+    warranty_years = int(request.form.get("warranty_years", 0) or 0)
+    category_id = int(request.form.get("category_id"))
+    stock = int(request.form.get("stock", "100") or "100")
+    image_url = (request.form.get("image_url") or "").strip()
+    file = request.files.get("image")
+
+    image_blob = None
+    image_mimetype = None
+    if file and file.filename:
+        data = file.read()
+        if len(data) > 8 * 1024 * 1024: # 8MB limit
+            flash("Image too large (max 8MB).", "danger")
+            return redirect(url_for("admin_dashboard"))
+        image_blob = data
+        image_mimetype = file.mimetype or "image/jpeg"
+
+    if image_blob:
+        execute(
+            "INSERT INTO products (name, description, price, warranty_years, image_blob, image_mimetype, image_url, category_id, stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (name, description, str(price), warranty_years, image_blob, image_mimetype, None, category_id, stock),
+        )
+    else:
+        execute(
+            "INSERT INTO products (name, description, price, warranty_years, image_url, category_id, stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (name, description, str(price), warranty_years, image_url, category_id, stock),
+        )
+
+    flash("Product created.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/product/<int:pid>/delete", methods=["POST"])
+@admin_required
+def admin_product_delete(pid):
+    execute("DELETE FROM products WHERE id=%s", (pid,))
+    flash("Product deleted.", "warning")
+    return redirect(url_for("admin_dashboard"))
+
 # --- EMAIL VERIFICATION ROUTES (unchanged) ---
 @app.route("/verify-email/<token>")
 def verify_email(token):
@@ -689,7 +747,7 @@ def index():
         "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
         "c.name AS category_name "
         "FROM products p JOIN categories c ON c.id = p.category_id "
-        "ORDER BY p.created_at DESC LIMIT 6"
+        "ORDER BY p.created_at DESC LIMIT 8"
     )
     categories = fetchall("SELECT * FROM categories ORDER BY name")
     return render_template("index.html", featured=featured, categories=categories)
@@ -1295,6 +1353,83 @@ def update_face_complete():
     flash("Face updated successfully!", "success")
     return redirect(url_for("profile"))
 
+
+@app.route("/edit-profile", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    user = current_user()  # Note: Added parentheses to CALL the function
+    
+    if not user:
+        flash("Please login first.", "warning")
+        return redirect(url_for("login"))
+    
+    # Get complete user details
+    user_details = fetchone("SELECT * FROM users WHERE id=%s", (user["id"],))
+    
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        mobile = request.form.get("mobile", "").strip()
+        address_line1 = request.form.get("address_line1", "").strip()
+        address_line2 = request.form.get("address_line2", "").strip()
+        city = request.form.get("city", "").strip()
+        state = request.form.get("state", "").strip()
+        pincode = request.form.get("pincode", "").strip()
+        
+        # Validate required fields
+        if not name or not email:
+            flash("Name and email are required.", "danger")
+            return render_template("edit_profile.html", user=user_details)
+        
+        # Check if email is being changed and if it's already taken by another user
+        if email != user_details["email"]:
+            existing = fetchone("SELECT id FROM users WHERE email=%s AND id!=%s", (email, user["id"]))
+            if existing:
+                flash("Email already in use by another account.", "danger")
+                return render_template("edit_profile.html", user=user_details)
+        
+        # Validate mobile number if provided
+        if mobile and (not mobile.isdigit() or len(mobile) not in (10, 11, 12, 13)):
+            flash("Please enter a valid mobile number (10-13 digits).", "danger")
+            return render_template("edit_profile.html", user=user_details)
+        
+        try:
+            # Update the user's profile
+            execute("""
+                UPDATE users 
+                SET name=%s, email=%s, mobile=%s, 
+                    address_line1=%s, address_line2=%s, 
+                    city=%s, state=%s, pincode=%s 
+                WHERE id=%s
+            """, (name, email, mobile, address_line1, address_line2, 
+                  city, state, pincode, user["id"]))
+            
+            flash("Profile updated successfully!", "success")
+            
+            # If email was changed, update session if needed
+            if email != user_details["email"]:
+                # You might want to force re-login or send verification email
+                send_email(
+                    to=email,
+                    subject="Profile Email Updated",
+                    template="email_changed",
+                    user_name=name,
+                    old_email=user_details["email"],
+                    new_email=email
+                )
+                flash("Email updated. A notification has been sent to your new email.", "info")
+            
+            # Redirect to profile page
+            return redirect(url_for("profile"))
+            
+        except Exception as e:
+            app.logger.error(f"Failed to update profile: {e}")
+            flash("Failed to update profile. Please try again.", "danger")
+            return render_template("edit_profile.html", user=user_details)
+    
+    # GET request - show the edit form
+    return render_template("edit_profile.html", user=user_details)
+
 # ====== REGISTRATION & LOGIN ROUTES ======
 def _gen_code(length=6):
     chars = string.ascii_uppercase + string.digits + string.ascii_lowercase
@@ -1762,4 +1897,4 @@ def debug_user():
     return "<br>".join(output)
 
 if __name__ == "__main__":
-    app.run(host='192.168.1.6', port=5001, debug=True, ssl_context='adhoc')
+    app.run(host='10.152.85.231', port=5000, debug=True, ssl_context='adhoc')

@@ -1,140 +1,1030 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Pre-compute shop_logo_url -->
-{% if shop_logo %}
-  {% if shop_logo.startswith('/static/') %}
-    {% set shop_logo_url = shop_logo %}
-  {% else %}
-    {% set shop_logo_url = url_for('static', filename=shop_logo) %}
-  {% endif %}
-{% else %}
-  {% set shop_logo_url = '' %}
-{% endif %}
+<style>
+  /* Profile Page - Modern Design with Bill Modal */
+  .profile-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
 
-<div class="container" style="padding:28px 0;">
+  /* Header */
+  .profile-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
 
-  <!-- PROFILE HEADER -->
-  <div class="profile-section" style="display:flex;gap:18px;align-items:center;">
-    {% if user.face_image %}
-      {% if user.face_image.startswith('/static/') %}
-        <img src="{{ user.face_image }}" alt="Profile"
-             style="width:96px;height:96px;border-radius:12px;object-fit:cover;border:2px solid var(--outline);" />
-      {% else %}
-        <img src="{{ url_for('static', filename=user.face_image) }}" alt="Profile"
-             style="width:96px;height:96px;border-radius:12px;object-fit:cover;border:2px solid var(--outline);" />
-      {% endif %}
-    {% else %}
-      <div style="width:96px;height:96px;border-radius:12px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--muted);">👤</div>
-    {% endif %}
+  .profile-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+  }
 
-    <div style="flex:1;">
-      <h2 style="margin:0 0 6px 0;">{{ user.name }}</h2>
-      <div class="kv" style="margin-top:6px;">
-        <div><small>Email</small><div style="font-weight:700">{{ user.email }}</div></div>
-        <div><small>Member since</small><div style="font-weight:700">{{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}</div></div>
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .avatar-container {
+    position: relative;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .avatar-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background: #10b981;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+  }
+
+  .profile-info {
+    flex: 1;
+  }
+
+  .profile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .profile-email {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .profile-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    opacity: 0.8;
+  }
+
+  /* Quick Actions */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    display: block;
+  }
+
+  .action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #667eea;
+  }
+
+  .action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+
+  .action-home .action-icon {
+    background: #e0f2fe;
+    color: #0284c7;
+  }
+
+  .action-edit .action-icon {
+    background: #f0f9ff;
+    color: #0ea5e9;
+  }
+
+  .action-face .action-icon {
+    background: #fef3c7;
+    color: #f59e0b;
+  }
+
+  .action-logout .action-icon {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  .action-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+  }
+
+  .action-desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+
+  /* Orders Section */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-title i {
+    color: #667eea;
+  }
+
+  .section-badge {
+    background: #e5e7eb;
+    color: #4b5563;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .orders-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 3rem;
+  }
+
+  .table-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.875rem;
+  }
+
+  .order-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    align-items: center;
+    transition: background-color 0.2s ease;
+  }
+
+  .order-row:hover {
+    background-color: #f9fafb;
+  }
+
+  .order-row:last-child {
+    border-bottom: none;
+  }
+
+  /* Product Name with Bill Link */
+  .product-name-link {
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .product-name-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+  }
+
+  .product-name-link i {
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+
+  /* Warranty Badges */
+  .warranty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .warranty-active {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .warranty-expired {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .warranty-none {
+    background: #e5e7eb;
+    color: #4b5563;
+  }
+
+  /* Claim Button */
+  .claim-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .claim-btn:hover {
+    background: #5a6fd8;
+  }
+
+  .claim-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-message {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Bill Modal */
+  .bill-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .bill-modal.active {
+    display: flex;
+  }
+
+  .bill-content {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    animation: modalSlideIn 0.3s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .bill-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .bill-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .close-modal {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+  }
+
+  .close-modal:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .bill-body {
+    padding: 2rem;
+  }
+
+  .company-info {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .company-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .company-tagline {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .bill-details {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .detail-column h4 {
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .detail-column p {
+    color: #1f2937;
+    margin: 0.25rem 0;
+  }
+
+  .bill-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+  }
+
+  .bill-table th {
+    background: #f9fafb;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .bill-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+  }
+
+  .bill-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .bill-totals {
+    text-align: right;
+    border-top: 2px solid #e5e7eb;
+    padding-top: 1.5rem;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .total-label {
+    color: #6b7280;
+  }
+
+  .total-amount {
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .grand-total {
+    font-size: 1.25rem;
+    color: #667eea;
+    font-weight: 700;
+  }
+
+  .bill-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .bill-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  .print-btn,
+  .close-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .print-btn {
+    background: #667eea;
+    color: white;
+  }
+
+  .print-btn:hover {
+    background: #5a6fd8;
+  }
+
+  .close-btn {
+    background: #e5e7eb;
+    color: #4b5563;
+  }
+
+  .close-btn:hover {
+    background: #d1d5db;
+  }
+
+  /* Claims Section */
+  .claims-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    margin-top: 2rem;
+  }
+
+  .claims-table th {
+    padding: 1rem;
+    text-align: left;
+    background: #f9fafb;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .claims-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+  }
+
+  .claims-table tr:hover {
+    background: #f9fafb;
+  }
+
+  .claims-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .claim-status {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .status-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-approved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* Warranty Claim Reason in Modal */
+  .warranty-reason-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .warranty-reason-section h4 {
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .reason-text {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
+    line-height: 1.5;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+
+    .table-header,
+    .order-row {
+      grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+    }
+
+    .table-header div:nth-child(3),
+    .order-row>div:nth-child(3) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .profile-stats {
+      justify-content: center;
+    }
+
+    .quick-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .table-header,
+    .order-row {
+      grid-template-columns: 1fr 2fr 1fr;
+      padding: 1rem;
+    }
+
+    .table-header div:nth-child(3),
+    .table-header div:nth-child(4),
+    .order-row>div:nth-child(3),
+    .order-row>div:nth-child(4) {
+      display: none;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .bill-content {
+      max-height: 95vh;
+    }
+
+    .bill-details {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .bill-actions {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 480px) {
+
+    .table-header,
+    .order-row {
+      grid-template-columns: 1fr 2fr;
+      font-size: 0.875rem;
+    }
+
+    .table-header div:nth-child(5),
+    .order-row>div:nth-child(5) {
+      display: none;
+    }
+  }
+</style>
+
+<div class="profile-page">
+  <!-- Profile Header -->
+  <div class="profile-hero">
+    <div class="hero-content">
+      <div class="avatar-container">
+        <div class="profile-avatar">
+          {% if user.face_image %}
+          {% if user.face_image.startswith('/static/') %}
+          <img src="{{ user.face_image }}" alt="Profile">
+          {% else %}
+          <img src="{{ url_for('static', filename=user.face_image) }}" alt="Profile">
+          {% endif %}
+          {% else %}
+          <div class="avatar-placeholder">
+            <i class="fas fa-user"></i>
+          </div>
+          {% endif %}
+        </div>
+        <div class="avatar-badge">
+          <i class="fas fa-check"></i>
+        </div>
       </div>
 
-      <!-- Profile action buttons -->
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn" href="{{ url_for('index') }}">Home</a>
-        <a class="btn outline" href="{{ url_for('update_profile') }}">Edit Profile</a>
-        <a class="btn outline" href="{{ url_for('profile_face_request_otp') }}">Update Face</a>
-        <a class="btn outline" href="{{ url_for('logout') }}">Logout</a>
+      <div class="profile-info">
+        <h1 class="profile-name">{{ user.name }}</h1>
+        <div class="profile-email">
+          <i class="fas fa-envelope"></i>
+          {{ user.email }}
+        </div>
+        <div class="profile-email">
+          <i class="fas fa-calendar-alt"></i>
+          Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}
+        </div>
+        <div class="profile-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ orders|length }}</span>
+            <span class="stat-label">Orders</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ claims|length }}</span>
+            <span class="stat-label">Claims</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ wishlist_count or 0 }}</span>
+            <span class="stat-label">Wishlist</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- FLASH MESSAGES -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div style="margin-top:16px;">
-        {% for cat, msg in messages %}
-          <div class="flash {{ cat }}">{{ msg }}</div>
-        {% endfor %}
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a href="{{ url_for('index') }}" class="action-card action-home">
+      <div class="action-icon">
+        <i class="fas fa-home"></i>
       </div>
-    {% endif %}
-  {% endwith %}
+      <div class="action-title">Home</div>
+      <div class="action-desc">Continue shopping</div>
+    </a>
 
-  <!-- ORDERS -->
-  <h3 class="section-title" style="margin-top:28px;">Your Orders</h3>
+    <a href="{{ url_for('update_profile') }}" class="action-card action-edit">
+      <div class="action-icon">
+        <i class="fas fa-user-edit"></i>
+      </div>
+      <div class="action-title">Edit Profile</div>
+      <div class="action-desc">Update your details</div>
+    </a>
+
+    <a href="{{ url_for('profile_face_request_otp') }}" class="action-card action-face">
+      <div class="action-icon">
+        <i class="fas fa-camera"></i>
+      </div>
+      <div class="action-title">Update Face</div>
+      <div class="action-desc">Change face recognition</div>
+    </a>
+
+    <a href="{{ url_for('logout') }}" class="action-card action-logout">
+      <div class="action-icon">
+        <i class="fas fa-sign-out-alt"></i>
+      </div>
+      <div class="action-title">Logout</div>
+      <div class="action-desc">Sign out of account</div>
+    </a>
+  </div>
+
+  <!-- Orders Section -->
+  <div class="section-header">
+    <h2 class="section-title">
+      <i class="fas fa-shopping-bag"></i>
+      Your Orders
+    </h2>
+    <div class="section-badge">{{ orders|length }} order{% if orders|length != 1 %}s{% endif %}</div>
+  </div>
 
   {% if orders %}
-  <div class="table-wrap" style="margin-top:12px;">
-    <table>
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Product</th>
-          <th class="numeric">Price</th>
-          <th class="numeric">Qty</th>
-          <th>Date</th>
-          <th class="numeric">Line Total</th>
-          <th>Warranty</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for order in orders %}
-          {% for p in order.products %}
-            <tr
-              data-order-id="{{ order.id }}"
-              data-product-id="{{ p.product_id }}"
-              data-product-name="{{ p.name|e }}"
-              data-unit-price="{{ '%.2f'|format(p.unit_price|float(0)) }}"
-              data-quantity="{{ p.quantity }}"
-              data-order-date="{{ order.date_time.strftime('%Y-%m-%d') if order.date_time else '' }}"
-              data-order-total="{{ '%.2f'|format(order.total|float(0)) }}"
-              data-warranty-years="{{ p.warranty_years if p.warranty_years is not none else 0 }}"
-            >
-              <td>{{ order.id }}</td>
+  <div class="orders-table">
+    <!-- Table Header -->
+    <div class="table-header">
+      <div>Order ID</div>
+      <div>Product</div>
+      <div>Price</div>
+      <div>Qty</div>
+      <div>Warranty</div>
+      <div>Action</div>
+    </div>
 
-              <!-- product name opens bill modal -->
-              <td class="product-name" role="button" tabindex="0" style="cursor:pointer;color:var(--brand-2);font-weight:700;">
-                {{ p.name }}
-              </td>
-
-              <td class="numeric">₹{{ "{:,.2f}".format(p.unit_price) }}</td>
-              <td class="numeric">{{ p.quantity }}</td>
-              <td>{{ order.date_time.strftime('%Y-%m-%d') if order.date_time else '' }}</td>
-              <td class="numeric">₹{{ "{:,.2f}".format(p.unit_price * p.quantity) }}</td>
-
-              <!-- warranty badge placeholder; filled by JS -->
-              <td><span class="badge status-placeholder">Checking...</span></td>
-
-              <!-- Claim link: navigates to claim form page (GET parameters) -->
-              <td>
-                <a
-                  class="btn claim-link"
-                  href="{{ url_for('claim_warranty') }}?order_id={{ order.id }}&product_id={{ p.product_id }}"
-                  role="button"
-                  aria-disabled="false"
-                >
-                  Claim Warranty
-                </a>
-              </td>
-            </tr>
-          {% endfor %}
-        {% endfor %}
-      </tbody>
-    </table>
+    <!-- Table Rows -->
+    {% for order in orders %}
+    {% for p in order.products %}
+    <div class="order-row" data-order-id="{{ order.id }}" data-product-id="{{ p.product_id }}">
+      <div>#{{ order.id }}</div>
+      <div>
+        <a class="product-name-link view-bill" data-order-id="{{ order.id }}" data-product-id="{{ p.product_id }}"
+          data-product-name="{{ p.name }}" data-product-price="{{ p.unit_price|float }}"
+          data-quantity="{{ p.quantity }}"
+          data-order-date="{{ order.date_time.strftime('%Y-%m-%d') if order.date_time else '' }}"
+          data-order-total="{{ order.total|float }}">
+          <i class="fas fa-receipt"></i>
+          {{ p.name }}
+        </a>
+      </div>
+      <div class="price-cell" data-price="{{ p.unit_price|float }}">₹{{ "%.2f"|format(p.unit_price|float) }}</div>
+      <div>{{ p.quantity }}</div>
+      <div>
+        {% set warranty_years = p.warranty_years if p.warranty_years is not none else 0 %}
+        {% if warranty_years > 0 %}
+        <span class="warranty-badge warranty-active">
+          <i class="fas fa-shield-alt"></i>
+          {{ warranty_years }} year{% if warranty_years != 1 %}s{% endif %}
+        </span>
+        {% else %}
+        <span class="warranty-badge warranty-none">
+          <i class="fas fa-ban"></i>
+          No warranty
+        </span>
+        {% endif %}
+      </div>
+      <div>
+        {% if warranty_years > 0 %}
+        <a href="{{ url_for('claim_warranty') }}?order_id={{ order.id }}&product_id={{ p.product_id }}"
+          class="claim-btn">
+          Claim
+        </a>
+        {% else %}
+        <button class="claim-btn" disabled>No Warranty</button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% endfor %}
   </div>
   {% else %}
-    <p class="muted" style="text-align:center;margin:18px 0;">No orders found.</p>
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-shopping-bag"></i>
+    </div>
+    <h3 class="empty-title">No orders yet</h3>
+    <p class="empty-message">You haven't placed any orders. Start shopping now!</p>
+    <a href="{{ url_for('index') }}" class="claim-btn">
+      Browse Products
+    </a>
+  </div>
   {% endif %}
 
-<!-- WARRANTY CLAIMS -->
-<h3 class="section-title" style="margin-top:28px;">Warranty Claims</h3>
+  <!-- Bill Modal -->
+  <div class="bill-modal" id="billModal">
+    <div class="bill-content">
+      <div class="bill-header">
+        <h2>Invoice / Bill</h2>
+        <button class="close-modal" id="closeModalBtn">&times;</button>
+      </div>
 
-{% if claims %}
-<div class="table-wrap" style="margin-top:12px;">
-  <table>
+      <div class="bill-body">
+        <!-- Company Info -->
+        <div class="company-info">
+          <div class="company-name">ShopEase</div>
+          <div class="company-tagline">Your face is your warranty</div>
+        </div>
+
+        <!-- Bill Details -->
+        <div class="bill-details">
+          <div class="detail-column">
+            <h4>Bill To:</h4>
+            <p id="billCustomerName">{{ user.name }}</p>
+            <p id="billCustomerEmail">{{ user.email }}</p>
+            {% if user.address_line1 %}
+            <p id="billCustomerAddress">{{ user.address_line1 }}</p>
+            {% if user.address_line2 %}
+            <p>{{ user.address_line2 }}</p>
+            {% endif %}
+            {% if user.city or user.state or user.pincode %}
+            <p>
+              {% if user.city %}{{ user.city }}, {% endif %}
+              {% if user.state %}{{ user.state }}{% endif %}
+              {% if user.pincode %} - {{ user.pincode }}{% endif %}
+            </p>
+            {% endif %}
+            {% endif %}
+          </div>
+
+          <div class="detail-column" style="text-align: right;">
+            <h4>Invoice Details:</h4>
+            <p><strong>Invoice #:</strong> <span id="billOrderId"></span></p>
+            <p><strong>Date:</strong> <span id="billOrderDate"></span></p>
+            <p><strong>Status:</strong> <span style="color: #10b981; font-weight: 600;">Paid</span></p>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="bill-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Unit Price</th>
+              <th>Quantity</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="billItems">
+            <!-- Items will be inserted here by JavaScript -->
+          </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="bill-totals">
+          <div class="total-row">
+            <span class="total-label">Subtotal:</span>
+            <span class="total-amount" id="billSubtotal">₹0.00</span>
+          </div>
+          <div class="total-row">
+            <span class="total-label">Shipping:</span>
+            <span class="total-amount">₹0.00</span>
+          </div>
+          <div class="total-row">
+            <span class="total-label">Tax (0%):</span>
+            <span class="total-amount">₹0.00</span>
+          </div>
+          <div class="total-row grand-total">
+            <span class="total-label">Total Amount:</span>
+            <span class="total-amount" id="billTotal">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Warranty Claims Section in Modal -->
+        <div class="warranty-reason-section" id="warrantyReasonSection" style="display: none;">
+          <h4>
+            <i class="fas fa-shield-alt"></i>
+            Warranty Claim Details
+          </h4>
+          <div class="reason-text" id="warrantyReasonText">
+            <!-- Warranty reason will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Bill Actions -->
+        <div class="bill-actions">
+          <button class="print-btn" id="printBillBtn">
+            <i class="fas fa-print"></i> Print Bill
+          </button>
+          <button class="close-btn" id="closeBillBtn">
+            <i class="fas fa-times"></i> Close
+          </button>
+        </div>
+      </div>
+
+      <div class="bill-footer">
+        <p>Thank you for shopping with us! Your face is your warranty.</p>
+        <p>For warranty claims, use the face recognition feature.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Warranty Claims Section -->
+  <div class="section-header" style="margin-top: 3rem;">
+    <h2 class="section-title">
+      <i class="fas fa-shield-alt"></i>
+      Warranty Claims
+    </h2>
+  </div>
+
+  {% if claims %}
+  <table class="claims-table">
     <thead>
       <tr>
         <th>Claim ID</th>
         <th>Product</th>
-        <th>Order ID</th>
-        <th>Claim Date</th>
+        <th>Order</th>
         <th>Reason</th>
         <th>Status</th>
         <th>Submitted</th>
@@ -144,455 +1034,315 @@
       {% for claim in claims %}
       <tr>
         <td>#{{ claim.id }}</td>
-        <td>{{ claim.product_name }}</td>
-        <td><a href="{{ url_for('order_success', order_id=claim.order_id) }}" class="btn outline" style="font-size:0.85em;padding:4px 8px;">#{{ claim.order_id }}</a></td>
-        <td>{{ claim.claim_date.strftime('%Y-%m-%d') if claim.claim_date else '—' }}</td>
-        <td style="max-width:200px;word-wrap:break-word;">{{ claim.reason|truncate(100) }}</td>
         <td>
-          {% if claim.status == 'pending' %}
-            <span class="badge none">Pending</span>
-          {% elif claim.status == 'approved' %}
-            <span class="badge active">Approved</span>
-          {% elif claim.status == 'rejected' %}
-            <span class="badge expired">Rejected</span>
-          {% else %}
-            <span class="badge">{{ claim.status|title }}</span>
+          <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ claim.product_name }}</div>
+        </td>
+        <td>
+          <a href="{{ url_for('order_success', order_id=claim.order_id) }}"
+            style="display: inline-block; padding: 0.5rem 1rem; background: #e5e7eb; color: #4b5563; border-radius: 6px; text-decoration: none; font-size: 0.875rem; font-weight: 500;">
+            Order #{{ claim.order_id }}
+          </a>
+        </td>
+        <td>
+          <span style="color: #4b5563; font-size: 0.875rem;">{{ claim.reason|truncate(80) }}</span>
+          {% if claim.reason|length > 80 %}
+          <button class="view-reason-btn"
+            style="background: none; border: none; color: #667eea; cursor: pointer; font-size: 0.75rem; padding: 0; margin-left: 0.5rem;"
+            data-reason="{{ claim.reason }}" data-product="{{ claim.product_name }}" data-order="{{ claim.order_id }}">
+            View Full
+          </button>
           {% endif %}
         </td>
-        <td>{{ claim.created_at.strftime('%Y-%m-%d %H:%M') if claim.created_at else '—' }}</td>
+        <td>
+          {% if claim.status == 'pending' %}
+          <span class="claim-status status-pending">
+            <i class="fas fa-clock"></i> Pending
+          </span>
+          {% elif claim.status == 'approved' %}
+          <span class="claim-status status-approved">
+            <i class="fas fa-check-circle"></i> Approved
+          </span>
+          {% elif claim.status == 'rejected' %}
+          <span class="claim-status status-rejected">
+            <i class="fas fa-times-circle"></i> Rejected
+          </span>
+          {% else %}
+          <span class="claim-status" style="background: #e5e7eb; color: #4b5563;">
+            {{ claim.status|title }}
+          </span>
+          {% endif %}
+        </td>
+        <td>{{ claim.created_at.strftime('%Y-%m-%d') if claim.created_at else '—' }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
-{% else %}
-  <p class="muted" style="text-align:center;margin:18px 0;">No warranty claims yet.</p>
-{% endif %}
-
-<!-- BILL / INVOICE MODAL -->
-  <div id="billModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
-    <div class="modal-panel" role="document" aria-labelledby="invoiceTitle">
-      <header class="modal-header">
-        <!-- Use shop_name and optional shop_logo passed from Flask -->
-        <div style="display:flex;align-items:center;gap:12px;">
-          {% if shop_logo %}
-            {% if shop_logo.startswith('/static/') %}
-              <img src="{{ shop_logo }}" alt="logo" style="height:40px;width:auto;border-radius:6px;object-fit:contain;">
-            {% else %}
-              <img src="{{ url_for('static', filename=shop_logo) }}" alt="logo" style="height:40px;width:auto;border-radius:6px;object-fit:contain;">
-            {% endif %}
-          {% endif %}
-          <div style="line-height:1;">
-            <div style="font-weight:800;font-size:18px;">{{ shop_name if shop_name else 'Shop Ease' }}</div>
-            <div style="font-size:12px;color:var(--muted)">{{ shop_tagline if shop_tagline else 'Quality Products Guaranteed' }}</div>
-          </div>
-        </div>
-
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-          <button class="modal-close" aria-label="Close invoice" id="modalCloseBtn">&times;</button>
-        </div>
-      </header>
-
-      <section class="modal-body">
-        <div class="invoice-meta" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-          <div><strong>Order ID:</strong> <span id="modal-order-id">-</span></div>
-          <div><strong>Order Date:</strong> <span id="modal-order-date">-</span></div>
-        </div>
-
-        <table class="invoice-items" style="width:100%;border-collapse:collapse;margin-bottom:12px;">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid var(--outline)">Item</th>
-              <th style="text-align:right;padding:8px;border-bottom:1px solid var(--outline)">Unit Price</th>
-              <th style="text-align:right;padding:8px;border-bottom:1px solid var(--outline)">Qty</th>
-              <th style="text-align:right;padding:8px;border-bottom:1px solid var(--outline)">Line Total</th>
-            </tr>
-          </thead>
-          <tbody id="modal-items">
-            <!-- filled by JS -->
-          </tbody>
-        </table>
-
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;">
-          <div style="text-align:right;">
-            <div style="font-size:14px;"><small>Subtotal</small></div>
-            <div id="modal-subtotal" style="font-weight:700;font-size:18px;">₹0.00</div>
-          </div>
-        </div>
-      </section>
-
-      <footer class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
-        <small class="muted">Thank you for your purchase.</small>
-        <div style="display:flex;gap:8px;">
-          <button class="btn outline" id="printInvoiceBtn" type="button">Print</button>
-          <button class="btn" id="closeInvoiceBtn" type="button">Close</button>
-        </div>
-      </footer>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-shield-alt"></i>
     </div>
+    <h3 class="empty-title">No warranty claims</h3>
+    <p class="empty-message">You haven't submitted any warranty claims yet.</p>
   </div>
-
+  {% endif %}
 </div>
 
-<!-- Inline styles for modal + badges + disabled state -->
-<style>
-  .modal {
-    position: fixed;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10,10,12,0.45);
-    z-index: 1200;
-    padding: 20px;
-  }
-  .modal-panel {
-    width: min(880px, 96%);
-    background: var(--surface, #fff);
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(2,6,23,0.12);
-    padding: 16px;
-    max-height: 86vh;
-    overflow:auto;
-  }
-  .modal-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
-  .modal-close {
-    background:transparent;border:0;font-size:22px;line-height:1;cursor:pointer;padding:6px 10px;color:var(--muted);
-  }
-  .invoice-items td, .invoice-items th { padding:8px 6px; }
-  .badge { display:inline-block;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600; }
-  .badge.active { background:#e6f6ff;color:#035; border:1px solid #bfe8ff; }
-  .badge.expired { background:#fff5f5;color:#7a1f1f;border:1px solid #ffdede; }
-  .badge.none { background:#f3f4f6;color:#6b7280;border:1px solid #e6e9ec; }
-  .btn { display:inline-block;padding:8px 12px;border-radius:8px;text-decoration:none;background:var(--brand, #3b82f6);color:#fff;font-weight:600;border:0;cursor:pointer; }
-  .btn.outline, .btn.outline:link, .btn.outline:visited { background:transparent;color:var(--text);border:1px solid var(--outline);padding:7px 11px; }
-  .btn.disabled, .claim-link.disabled { opacity:0.6; cursor:not-allowed; pointer-events:none; }
-  .flash { padding:10px;border-radius:8px;margin-bottom:8px; }
-  .muted { color:var(--muted); }
-  @media (max-width:600px) {
-    .modal-panel { padding:12px; }
-    .profile-section { flex-direction:column; align-items:flex-start; gap:12px; }
-  }
-</style>
-
-<!-- BILL / MODAL JS -->
 <script>
-  // Format INR with thousands separators
-  function formatINR(v){
-    const n = Number(v || 0);
-    if (Number.isNaN(n)) return '₹0.00';
-    return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    // Get modal elements
+    const billModal = document.getElementById('billModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const closeBillBtn = document.getElementById('closeBillBtn');
+    const printBillBtn = document.getElementById('printBillBtn');
+    const viewBillLinks = document.querySelectorAll('.view-bill');
+    const viewReasonButtons = document.querySelectorAll('.view-reason-btn');
+    const warrantyReasonSection = document.getElementById('warrantyReasonSection');
+    const warrantyReasonText = document.getElementById('warrantyReasonText');
 
-  // Pass full order data to JS
-  window.ORDER_DATA = {{ orders | tojson }};
+    // Store order data for bill generation
+    const ordersData = {{ orders| tojson
+  }};
 
-  // Open bill modal from a table row
-  function openBillModalFromRow(row){
-    const orderId = row.dataset.orderId;
-    // Find full order from global data
-    const order = window.ORDER_DATA.find(o => String(o.id) === orderId);
-    if (!order) {
-      alert("Order data not found.");
+  // Store claims data
+  const claimsData = {{ claims| tojson }};
+
+  // Format all prices on page load
+  formatAllPrices();
+
+  // Function to open bill modal
+  function openBillModal(orderId, productId, showWarrantyReason = false, warrantyReason = '') {
+    // Find the order and product
+    const order = ordersData.find(o => o.id == orderId);
+    const product = order?.products?.find(p => p.product_id == productId);
+
+    if (!order || !product) {
+      alert('Order or product not found!');
       return;
     }
 
-    // Fill meta
-    document.getElementById('modal-order-id').textContent = orderId;
-    document.getElementById('modal-order-date').textContent = order.date_time ? 
-      new Date(order.date_time).toISOString().split('T')[0] : '—';
+    // Update modal content
+    document.getElementById('billOrderId').textContent = order.id;
+    document.getElementById('billOrderDate').textContent = order.date_time ?
+      new Date(order.date_time).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) : 'N/A';
 
-    // Fill items table
-    const itemsContainer = document.getElementById('modal-items');
-    itemsContainer.innerHTML = '';
-    let subtotal = 0;
+    // Clear previous items
+    const billItemsContainer = document.getElementById('billItems');
+    billItemsContainer.innerHTML = '';
 
-    order.products.forEach(p => {
-      const unit = parseFloat(p.unit_price) || 0;
-      const qty = parseInt(p.quantity, 10) || 0;
-      const line = unit * qty;
-      subtotal += line;
+    // Add product to bill
+    const productPrice = parseFloat(product.unit_price) || 0;
+    const productQuantity = parseInt(product.quantity) || 1;
+    const productTotal = productPrice * productQuantity;
 
-      const r = document.createElement('tr');
-      r.innerHTML = `<td style="border-bottom:1px solid var(--outline)">${escapeHtml(p.name)}</td>
-                     <td style="text-align:right;border-bottom:1px solid var(--outline)">${formatINR(unit)}</td>
-                     <td style="text-align:right;border-bottom:1px solid var(--outline)">${qty}</td>
-                     <td style="text-align:right;border-bottom:1px solid var(--outline)">${formatINR(line)}</td>`;
-      itemsContainer.appendChild(r);
-    });
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+          <strong>${escapeHtml(product.name)}</strong>
+          ${product.warranty_years ? `<br><small style="color: #10b981;">Warranty: ${product.warranty_years} year${product.warranty_years != 1 ? 's' : ''}</small>` : ''}
+        </td>
+        <td>₹${formatCurrency(productPrice)}</td>
+        <td>${productQuantity}</td>
+        <td>₹${formatCurrency(productTotal)}</td>
+      `;
+    billItemsContainer.appendChild(row);
 
-    // Set totals
-    document.getElementById('modal-subtotal').textContent = formatINR(subtotal);
+    // Update totals
+    document.getElementById('billSubtotal').textContent = `₹${formatCurrency(productTotal)}`;
+    document.getElementById('billTotal').textContent = `₹${formatCurrency(productTotal)}`;
 
-    // Attach extra data so we can pass it to the print page
-    const modal = document.getElementById('billModal');
-    modal.dataset.printOrderId = orderId;
-    modal.dataset.printOrderDate = order.date_time ? new Date(order.date_time).toISOString().split('T')[0] : '';
-    modal.dataset.printSubtotal = subtotal;
-    modal.dataset.printShopName = "{{ shop_name if shop_name else 'Shop Ease' }}";
-    modal.dataset.printShopLogo = "{{ shop_logo_url }}";
-    modal.dataset.printShopTag = "{{ shop_tagline if shop_tagline else 'Quality Products Guaranteed' }}";
+    // Show/hide warranty reason section
+    if (showWarrantyReason && warrantyReason) {
+      warrantyReasonSection.style.display = 'block';
+      warrantyReasonText.textContent = warrantyReason;
+    } else {
+      warrantyReasonSection.style.display = 'none';
+    }
 
     // Show modal
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-
-    // focus management
-    const closeBtn = document.getElementById('modalCloseBtn');
-    if (closeBtn) closeBtn.focus();
+    billModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
   }
 
-  function closeBillModal(){
-    const modal = document.getElementById('billModal');
-    if (!modal) return;
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
+  // Function to close bill modal
+  function closeBillModal() {
+    billModal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    // Hide warranty reason section when closing
+    warrantyReasonSection.style.display = 'none';
   }
 
-  // Compute warranty badge and disable/enable Claim link visually
-  function updateWarrantyStatuses(){
-    const today = new Date();
-    document.querySelectorAll('table tbody tr[data-order-date]').forEach(row => {
-      const orderDate = row.dataset.orderDate;
-      const yrs = parseInt(row.dataset.warrantyYears || 0, 10);
-      const badge = row.querySelector('.badge') || row.querySelector('.status-placeholder');
-      const claimLink = row.querySelector('.claim-link');
+  // Function to print bill
+  function printBill() {
+    const printWindow = window.open('', '_blank');
+    const billContent = document.querySelector('.bill-content').cloneNode(true);
 
-      if (!orderDate || !yrs || yrs <= 0) {
-        if (badge) { badge.className = 'badge none'; badge.textContent = 'No Warranty'; }
-        if (claimLink) { claimLink.setAttribute('aria-disabled', 'true'); claimLink.classList.add('disabled'); claimLink.style.pointerEvents = 'none'; claimLink.style.opacity = '0.6'; claimLink.style.cursor = 'not-allowed'; }
+    // Remove action buttons from print view
+    const actions = billContent.querySelector('.bill-actions');
+    if (actions) actions.remove();
+
+    // Add print styles
+    const styles = `
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .bill-content { max-width: 100%; box-shadow: none; border: 1px solid #ddd; }
+          .bill-header { background: #667eea; color: white; padding: 1rem; }
+          .bill-body { padding: 1rem; }
+          .bill-table { width: 100%; margin: 1rem 0; }
+          .bill-totals { text-align: right; margin-top: 2rem; }
+          .warranty-reason-section { margin-top: 2rem; }
+          .reason-text { background: #f9fafb; padding: 1rem; border-radius: 8px; }
+          @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; }
+          }
+        </style>
+      `;
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Invoice - Order ${document.getElementById('billOrderId').textContent}</title>
+          ${styles}
+        </head>
+        <body>
+          ${billContent.outerHTML}
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(() => window.close(), 500);
+            }
+          <\/script>
+        </body>
+        </html>
+      `);
+    printWindow.document.close();
+  }
+
+  // Function to format all prices on the page
+  function formatAllPrices() {
+    // Format prices in orders table
+    const priceCells = document.querySelectorAll('.price-cell');
+    priceCells.forEach(cell => {
+      const price = parseFloat(cell.dataset.price) || 0;
+      cell.textContent = '₹' + formatCurrency(price);
+    });
+
+    // Format order totals in JavaScript (if needed elsewhere)
+    const orderTotals = document.querySelectorAll('[data-order-total]');
+    orderTotals.forEach(el => {
+      const total = parseFloat(el.dataset.orderTotal) || 0;
+      if (el.textContent.includes('₹')) {
+        el.textContent = el.textContent.replace(/₹\d+(\.\d+)?/, '₹' + formatCurrency(total));
+      }
+    });
+  }
+
+  // Add event listeners for product bill viewing
+  viewBillLinks.forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      const orderId = this.dataset.orderId;
+      const productId = this.dataset.productId;
+      openBillModal(orderId, productId);
+    });
+  });
+
+  // Add event listeners for warranty reason viewing
+  viewReasonButtons.forEach(button => {
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      const reason = this.dataset.reason;
+      const productName = this.dataset.product;
+      const orderId = this.dataset.order;
+
+      // Open bill modal with warranty reason
+      openBillModal(orderId, '', true, reason);
+
+      // Update modal title to show it's a warranty claim view
+      document.querySelector('.bill-header h2').textContent = 'Warranty Claim Details';
+
+      // Update company info to show product name
+      document.querySelector('.company-name').textContent = productName;
+      document.querySelector('.company-tagline').textContent = 'Warranty Claim Reason';
+    });
+  });
+
+  closeModalBtn.addEventListener('click', closeBillModal);
+  closeBillBtn.addEventListener('click', closeBillModal);
+  printBillBtn.addEventListener('click', printBill);
+
+  // Close modal when clicking outside
+  billModal.addEventListener('click', function (e) {
+    if (e.target === billModal) {
+      closeBillModal();
+    }
+  });
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && billModal.classList.contains('active')) {
+      closeBillModal();
+    }
+  });
+
+  // Helper function to format currency
+  function formatCurrency(amount) {
+    const num = parseFloat(amount || 0);
+    if (isNaN(num)) return '0.00';
+
+    return num.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Add loading state to claim buttons
+  const claimButtons = document.querySelectorAll('.claim-btn:not(:disabled)');
+  claimButtons.forEach(button => {
+    button.addEventListener('click', function (e) {
+      if (!this.href) {
+        e.preventDefault();
         return;
       }
 
-      const parts = orderDate.split('-').map(x => parseInt(x, 10));
-      if (parts.length >= 3) {
-        const od = new Date(parts[0], parts[1] - 1, parts[2]);
-        const end = new Date(od.getFullYear() + yrs, od.getMonth(), od.getDate());
-        if (end >= today) {
-          if (badge) { badge.className = 'badge active'; badge.textContent = 'In Warranty'; }
-          if (claimLink) { claimLink.setAttribute('aria-disabled', 'false'); claimLink.classList.remove('disabled'); claimLink.style.pointerEvents = ''; claimLink.style.opacity = ''; claimLink.style.cursor = 'pointer'; }
-        } else {
-          if (badge) { badge.className = 'badge expired'; badge.textContent = 'Warranty Expired'; }
-          if (claimLink) { claimLink.setAttribute('aria-disabled', 'true'); claimLink.classList.add('disabled'); claimLink.style.pointerEvents = 'none'; claimLink.style.opacity = '0.6'; claimLink.style.cursor = 'not-allowed'; }
+      const originalText = this.innerHTML;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+      this.disabled = true;
+
+      setTimeout(() => {
+        if (this.innerHTML.includes('fa-spinner')) {
+          this.innerHTML = originalText;
+          this.disabled = false;
         }
-      } else {
-        if (badge) { badge.className = 'badge none'; badge.textContent = 'Warranty Unknown'; }
-        if (claimLink) { claimLink.setAttribute('aria-disabled', 'true'); claimLink.classList.add('disabled'); claimLink.style.pointerEvents = 'none'; claimLink.style.opacity = '0.6'; claimLink.style.cursor = 'not-allowed'; }
-      }
+      }, 3000);
     });
-  }
-
-  // Event delegation for product click (open bill modal)
-  document.addEventListener('click', function(e){
-    const prod = e.target.closest('.product-name');
-    if (prod) {
-      const row = prod.closest('tr');
-      if (row) openBillModalFromRow(row);
-      return;
-    }
-
-    // close when clicking close buttons
-    if (e.target && (e.target.id === 'modalCloseBtn' || e.target.id === 'closeInvoiceBtn')) {
-      closeBillModal();
-      return;
-    }
-
-    // clicking outside modal-panel closes it
-    if (document.getElementById('billModal') && e.target === document.getElementById('billModal')) {
-      closeBillModal();
-    }
   });
 
-  // Close bill modal when clicking outside (fallback)
-  window.addEventListener('click', function(e){
-    const billModal = document.getElementById('billModal');
-    if (billModal && e.target === billModal) closeBillModal();
-  });
-
-  // Escape closes modal
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') {
-      const bm = document.getElementById('billModal');
-      if (bm && bm.style.display === 'flex') closeBillModal();
-    }
-
-    // accessibility: Enter activates product-name when focused
-    if (e.key === 'Enter') {
-      const active = document.activeElement;
-      if (active && active.classList && active.classList.contains('product-name')) {
-        const row = active.closest('tr');
-        if (row) openBillModalFromRow(row);
-      }
-    }
-  });
-
-  // Print button: open a printer-friendly invoice page in a new window (A4)
-  document.getElementById('printInvoiceBtn')?.addEventListener('click', function(){
-    // Gather data from modal
-    const modal = document.getElementById('billModal');
-    if (!modal) return;
-
-    // Build item rows by reading modal-items
-    const items = [];
-    document.querySelectorAll('#modal-items tr').forEach(tr => {
-      const cols = tr.querySelectorAll('td');
-      if (cols.length >= 4) {
-        items.push({
-          name: cols[0].textContent.trim(),
-          unit: cols[1].textContent.trim(),
-          qty: cols[2].textContent.trim(),
-          line: cols[3].textContent.trim()
-        });
-      }
+  // Add hover effect to product names
+  const productLinks = document.querySelectorAll('.product-name-link');
+  productLinks.forEach(link => {
+    link.addEventListener('mouseenter', function () {
+      this.style.textDecoration = 'underline';
     });
 
-    const orderId = modal.dataset.printOrderId || document.getElementById('modal-order-id')?.textContent || '';
-    const orderDate = modal.dataset.printOrderDate || document.getElementById('modal-order-date')?.textContent || '';
-    const subtotal = modal.dataset.printSubtotal || document.getElementById('modal-subtotal')?.textContent || '';
-    const shopName = modal.dataset.printShopName || "{{ shop_name if shop_name else 'Shop Ease' }}";
-    const shopLogo = modal.dataset.printShopLogo || "";
-    const shopTag = modal.dataset.printShopTag || "{{ shop_tagline if shop_tagline else 'Quality Products Guaranteed' }}";
-
-    // Print-specific CSS - A4 friendly and neat invoice layout
-    const css = `
-      @page { size: A4; margin: 16mm; }
-      body{font-family: Arial, Helvetica, sans-serif; color:#111; margin:0; -webkit-print-color-adjust:exact;}
-      .inv-wrap{max-width:800px;margin:0 auto;padding:10px;}
-      header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
-      .shop { display:flex; gap:12px; align-items:center; }
-      .shop img{ height:60px; width:auto; object-fit:contain; border-radius:6px; }
-      .shop h1{margin:0;font-size:20px;}
-      .shop small{display:block;color:#666;margin-top:6px;}
-      .meta{text-align:right;font-size:14px;}
-      table{width:100%;border-collapse:collapse;margin-top:12px;}
-      th, td{padding:10px;border-bottom:1px solid #ddd;text-align:left;font-size:13px;}
-      th.right, td.right { text-align:right; }
-      tfoot td{border-top:2px solid #000;font-weight:700;}
-      .totals{margin-top:12px;display:flex;justify-content:flex-end;}
-      .totals .total-block{width:320px;}
-      .notes{margin-top:18px;font-size:12px;color:#444;}
-      .center{ text-align:center; }
-      @media print {
-        .no-print{display:none!important;}
-        body{margin:0;}
-      }
-    `;
-
-    // Build HTML
-    let itemsHtml = '';
-    items.forEach(it => {
-      itemsHtml += `<tr>
-        <td>${escapeHtml(it.name)}</td>
-        <td class="right">${escapeHtml(it.unit)}</td>
-        <td class="right">${escapeHtml(it.qty)}</td>
-        <td class="right">${escapeHtml(it.line)}</td>
-      </tr>`;
+    link.addEventListener('mouseleave', function () {
+      this.style.textDecoration = 'none';
     });
-
-    const html = `
-      <!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Invoice - ${escapeHtml(orderId)}</title>
-          <style>${css}</style>
-        </head>
-        <body>
-          <div class="inv-wrap">
-            <header>
-              <div class="shop">
-                ${ shopLogo ? `<img src="${shopLogo}" alt="logo">` : '' }
-                <div>
-                  <h1>${escapeHtml(shopName)}</h1>
-                  <small>${escapeHtml(shopTag)}</small>
-                </div>
-              </div>
-              <div class="meta">
-                <div><strong>Invoice</strong></div>
-                <div>Order ID: ${escapeHtml(orderId)}</div>
-                <div>Date: ${escapeHtml(orderDate)}</div>
-              </div>
-            </header>
-
-            <section>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th class="right">Unit Price</th>
-                    <th class="right">Qty</th>
-                    <th class="right">Line Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                </tbody>
-              </table>
-
-              <div class="totals">
-                <div class="total-block">
-                  <table>
-                    <tbody>
-                      <tr>
-                        <td>Subtotal</td>
-                        <td class="right">${escapeHtml(subtotal)}</td>
-                      </tr>
-                      <!-- add Taxes, Discounts rows here if needed -->
-                      <tr>
-                        <td><strong>Total</strong></td>
-                        <td class="right"><strong>${escapeHtml(subtotal)}</strong></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="notes">
-                <div><strong>Notes:</strong></div>
-                <div>1. Goods once sold will not be taken back without prior agreement.</div>
-                <div>2. Please contact us for warranty assistance: {{ shop_contact if shop_contact else 'support@shopease.com' }}</div>
-              </div>
-
-              <div style="margin-top:30px;text-align:center;font-size:12px;color:#666;">
-                ${escapeHtml(shopName)} — Thank you for shopping with us.
-              </div>
-            </section>
-          </div>
-        </body>
-      </html>
-    `;
-
-    // Open a new window and write the invoice HTML
-    const w = window.open('', '_blank', 'width=900,height=800,scrollbars=yes');
-    if (!w) {
-      alert('Popup blocked. Please allow popups for this site to print the invoice.');
-      return;
-    }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-
-    // Delay briefly and then call print
-    w.focus();
-    setTimeout(function(){
-      w.print();
-      // Optionally close the window after printing; commented out so user can review
-      // w.close();
-    }, 400);
   });
-
-  // helper to escape HTML inserted into new window
-  function escapeHtml(str){
-    if (str === null || str === undefined) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    updateWarrantyStatuses();
   });
 </script>
 {% endblock %}

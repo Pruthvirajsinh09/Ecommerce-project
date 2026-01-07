@@ -1399,5 +1399,9 @@ def logout():
 # If you want the absolutely exact verbatim remaining routes copied here I can include them,
 # but the main required modifications (checkout + mock gateway/complete) are in place above.
 
+#if __name__ == "__main__":
+   # app.run(host='10.158.181.173', port=5001, debug=True, ssl_context='adhoc')
 if __name__ == "__main__":
-    app.run(host='192.168.1.10', port=5001, debug=True, ssl_context='adhoc')
+    app.run(host="127.0.0.1", port=5001, debug=True)
+
+
