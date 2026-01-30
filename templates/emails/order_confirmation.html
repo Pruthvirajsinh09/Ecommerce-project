@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Order Confirmation</title>
 </head>
+
 <body>
     <h2>Thank you for your order, {{ customer.name }}!</h2>
 
@@ -13,12 +15,12 @@
     <ul>
         {% for item in items %}
         <li>
-            {{ item.product.name }} (Qty: {{ item.qty }}) – ₹{{ item.line_total }}
+            {{ item.product.name }} (Qty: {{ item.qty }}) – ₹{{ item.line_total | inr }}
         </li>
         {% endfor %}
     </ul>
 
-    <p><strong>Subtotal:</strong> ₹{{ subtotal }}</p>
+    <p><strong>Subtotal:</strong> ₹{{ subtotal | inr }}</p>
 
     <p>
         Delivery to:<br>
@@ -28,4 +30,5 @@
 
     <p>If you have any questions, just reply to this email.</p>
 </body>
+
 </html>

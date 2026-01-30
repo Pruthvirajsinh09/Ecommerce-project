@@ -88,13 +88,6 @@
             </span>
             {% endif %}
         </div>
-
-        <!-- Quick View Button -->
-        <div class="quick-view-container">
-          <button class="quick-view-btn" title="Quick View">
-            <i class="fas fa-eye"></i> Quick View
-          </button>
-        </div>
       </div>
 
       <!-- Product Info -->
@@ -103,7 +96,7 @@
         <h3 class="product-title">{{ p.name }}</h3>
 
         <div class="product-price-wrapper">
-          <span class="product-price">₹{{ "%.2f"|format(p.price) }}</span>
+          <span class="product-price">₹{{ p.price | inr }}</span>
         </div>
 
         <!-- Action Buttons -->
@@ -183,7 +176,8 @@
         <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Secure
           Warranty
         </h3>
-        <p style="color: var(--text-muted); font-size: 0.875rem;">Face recognition warranty claims for easy support</p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Face recognition warranty claims for easy support
+        </p>
       </div>
 
       <div class="feature" style="text-align: center;">
@@ -191,7 +185,8 @@
           style="width: 60px; height: 60px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
           <i class="fas fa-truck"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Fast Delivery
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Fast
+          Delivery
         </h3>
         <p style="color: var(--text-muted); font-size: 0.875rem;">Quick shipping on all {{ category.name|lower }}
           products
@@ -203,7 +198,8 @@
           style="width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
           <i class="fas fa-undo"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Easy Returns
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Easy
+          Returns
         </h3>
         <p style="color: var(--text-muted); font-size: 0.875rem;">30-day return policy on eligible items</p>
       </div>

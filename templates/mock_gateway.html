@@ -56,7 +56,7 @@
           <div class="order-item">
             <div class="item-name">{{ it.get('product', {}).get('name', 'Unknown Product') }}</div>
             <div class="item-qty">Qty: {{ it.get('qty', 0) }}</div>
-            <div class="item-price">₹{{ it.get('line_total', '0.00') }}</div>
+            <div class="item-price">₹{{ it.get('line_total', '0.00') | inr }}</div>
           </div>
           {% endfor %}
           {% else %}
@@ -66,7 +66,7 @@
 
         <div class="order-total">
           <div class="total-label">Total Amount</div>
-          <div class="total-amount">₹{{ payment.get('subtotal', '0.00') }}</div>
+          <div class="total-amount">₹{{ payment.get('subtotal', '0.00') | inr }}</div>
         </div>
       </div>
 
@@ -98,7 +98,7 @@
       <!-- Payment Amount Display -->
       <div class="payment-amount-display">
         <div class="amount-label">Amount to Pay</div>
-        <div class="amount-value">₹{{ payment.get('subtotal', '0.00') }}</div>
+        <div class="amount-value">₹{{ payment.get('subtotal', '0.00') | inr }}</div>
         <div class="currency-info">INR - Indian Rupee</div>
       </div>
 
@@ -174,7 +174,7 @@
         <form method="post" action="{{ url_for('mock_gateway_complete', token=token) }}" class="payment-form">
           <button type="submit" class="btn-pay-now">
             <span class="btn-icon">✅</span>
-            <span class="btn-text">Pay ₹{{ payment.get('subtotal', '0.00') }}</span>
+            <span class="btn-text">Pay ₹{{ payment.get('subtotal', '0.00') | inr }}</span>
           </button>
         </form>
 

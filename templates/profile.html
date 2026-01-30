@@ -43,8 +43,8 @@
   }
 
   .profile-avatar {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
     border: 4px solid rgba(255, 255, 255, 0.3);
     overflow: hidden;
@@ -776,7 +776,7 @@
             <span class="stat-label">Orders</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">₹{{ "{:,.0f}".format(total_spent) }}</span>
+            <span class="stat-value">₹{{ total_spent | inr }}</span>
             <span class="stat-label">Total Spent</span>
           </div>
           <div class="stat-item">
@@ -933,7 +933,7 @@
           {{ p.name }}
         </a>
       </div>
-      <div class="price-cell" data-price="{{ p.unit_price|float }}">₹{{ "%.2f"|format(p.unit_price|float) }}</div>
+      <div class="price-cell" data-price="{{ p.unit_price|float }}">₹{{ p.unit_price | inr }}</div>
       <div>{{ p.quantity }}</div>
       <div>
         {% set warranty_years = p.warranty_years if p.warranty_years is not none else 0 %}

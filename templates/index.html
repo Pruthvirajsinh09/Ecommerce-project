@@ -42,12 +42,6 @@
           </span>
           {% endif %}
         </div>
-        <!-- Quick View Button - now appears at bottom right corner -->
-        <div class="quick-view-container">
-          <button class="quick-view-btn" title="Quick View">
-            <i class="fas fa-eye"></i> Quick View
-          </button>
-        </div>
       </div>
 
       <!-- Product Info -->
@@ -55,7 +49,7 @@
         <div class="product-category">{{ p.category_name }}</div>
         <h3 class="product-title">{{ p.name }}</h3>
         <div class="product-price-wrapper">
-          <span class="product-price">₹{{ "%.2f"|format(p.price) }}</span>
+          <span class="product-price">₹{{ p.price | inr }}</span>
         </div>
 
         <!-- Action Buttons -->
@@ -500,10 +494,6 @@
       transform: translateY(-5px);
     }
 
-    .quick-view-btn {
-      padding: 0.5rem 0.8rem;
-      font-size: 0.8rem;
-    }
   }
 
   /* Custom cursor for product cards */
@@ -540,26 +530,6 @@
       });
     });
 
-    // Quick view button functionality
-    const quickViewButtons = document.querySelectorAll('.quick-view-btn');
-    quickViewButtons.forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Add animation
-        const originalText = this.innerHTML;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-        this.disabled = true;
-
-        // Simulate quick view action
-        setTimeout(() => {
-          this.innerHTML = originalText;
-          this.disabled = false;
-          alert('Quick view feature coming soon!');
-        }, 1000);
-      });
-    });
 
     // Add click event to product cards for better UX
     const productCards = document.querySelectorAll('.product-card');

@@ -40,8 +40,8 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;">
           {{ p.name }}</h3>
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 1.25rem;">₹{{
-          "%.2f"|format(p.price) }}</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 1.25rem;">₹{{ p.price |
+          inr }}</div>
 
         <div style="display: flex; gap: 0.5rem;" onclick="event.stopPropagation();">
           <button class="btn-primary" onclick="ShopEase.addToCart('{{ p.id }}', 1);"

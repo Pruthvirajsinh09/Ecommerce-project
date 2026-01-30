@@ -53,7 +53,7 @@
         {% endif %}
 
         <div class="product-price-wrapper">
-          <span class="product-price">₹{{ "%.2f"|format(item.price) }}</span>
+          <span class="product-price">₹{{ item.price | inr }}</span>
         </div>
 
         <!-- Action Buttons -->

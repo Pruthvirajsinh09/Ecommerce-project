@@ -325,6 +325,36 @@ def inject_now():
         "wishlist_count": get_wishlist_count() if user else 0  # ✅ Inject wishlist count
     }
 
+@app.template_filter('inr')
+def inr_filter(number):
+    """
+    Formats a number into the Indian numbering system (e.g., 1,23,456.78).
+    """
+    try:
+        number = float(number)
+        s = f"{number:.2f}"
+        if "." in s:
+            main, decimals = s.split(".")
+        else:
+            main, decimals = s, ""
+            
+        # Reverse the main part to process it
+        main = main[::-1]
+        res = ""
+        for i in range(len(main)):
+            if i == 3: # First comma after 3 digits (thousands)
+                res += ","
+            elif i > 3 and (i - 3) % 2 == 0: # Subsequent commas every 2 digits
+                res += ","
+            res += main[i]
+        
+        res = res[::-1] # Reverse back to original order
+        if decimals:
+            return f"{res}.{decimals}"
+        return res
+    except (ValueError, TypeError):
+        return number
+
 # --- FACE HELPERS ---
 def _save_face_image_bytes(uid, bgr_image):
     filename = f"user_{uid}.jpg"
@@ -864,6 +894,26 @@ def product_detail(pid):
     )
     
     return render_template("product_detail.html", product=product, related_products=related_products)
+
+@app.route("/api/product/<int:pid>")
+def api_product_detail(pid):
+    product = fetchone(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p "
+        "JOIN categories c ON c.id = p.category_id "
+        "WHERE p.id = %s",
+        (pid,)
+    )
+    if not product:
+        return jsonify({"success": False, "error": "Product not found"}), 404
+    
+    # Pre-format price for display if needed, but sending numeric for JS to handle is better
+    # However, to match the formatting template filters, we might want to pre-render or send raw.
+    # In this case, we'll send it as is.
+    product["price"] = float(product["price"])
+    return jsonify({"success": True, "product": product})
 
 @app.route("/electronics")
 def electronics():
@@ -2029,4 +2079,4 @@ def debug_user():
     return "<br>".join(output)
 
 if __name__ == "__main__":
-    app.run(host='192.168.0.143', port=5000, debug=True, ssl_context='adhoc')
+    app.run(host='10.179.4.231', port=5000, debug=True, ssl_context='adhoc')

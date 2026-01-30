@@ -1366,44 +1366,6 @@ label {
   filter: brightness(1.05);
 }
 
-/* Quick View Container - positioned at bottom right */
-.quick-view-container {
-  position: absolute;
-  bottom: 15px;
-  right: 15px;
-  z-index: 3;
-}
-
-.quick-view-btn {
-  background: var(--surface);
-  color: var(--brand);
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 25px;
-  font-weight: 600;
-  cursor: pointer;
-  transform: translateX(20px);
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  backdrop-filter: blur(10px);
-}
-
-.product-card:hover .quick-view-btn {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.quick-view-btn:hover {
-  background: white;
-  transform: translateX(0) scale(1.05);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-}
-
 .product-badges {
   position: absolute;
   top: 1rem;

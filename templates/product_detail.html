@@ -38,7 +38,7 @@
             </div>
 
             <div class="price-section">
-                <div class="current-price">₹{{ "%.2f"|format(product.price) }}</div>
+                <div class="current-price">₹{{ product.price | inr }}</div>
             </div>
 
             <!-- Warranty Badge -->
@@ -135,7 +135,7 @@
                     <div class="product-category">{{ p.category_name }}</div>
                     <h3 class="product-title">{{ p.name }}</h3>
                     <div class="product-price-wrapper">
-                        <span class="product-price">₹{{ "%.2f"|format(p.price) }}</span>
+                        <span class="product-price">₹{{ p.price | inr }}</span>
                     </div>
                 </div>
             </a>

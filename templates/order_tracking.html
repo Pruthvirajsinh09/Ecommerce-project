@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fas fa-box-open me-2 text-primary"></i>Track Order #{{ order.id }}</h2>
+                    <p class="text-muted mb-0">Placed on {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                </div>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to My Orders
+                </a>
+            </div>
+
+            <!-- Tracking Timeline -->
+            <div class="card shadow-sm border-0 mb-4 rounded-3 p-4 p-md-5">
+                <div class="tracking-timeline d-flex flex-column flex-md-row justify-content-between">
+                    <div
+                        class="step {% if order.status in ['Pending', 'Processing', 'Shipped', 'Delivered'] %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-clipboard-list"></i></div>
+                        <div class="step-text">
+                            <h6>Ordered</h6>
+                            <small class="text-muted">Order received</small>
+                        </div>
+                    </div>
+                    <div class="step {% if order.status in ['Processing', 'Shipped', 'Delivered'] %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-cog"></i></div>
+                        <div class="step-text">
+                            <h6>Processing</h6>
+                            <small class="text-muted">Getting it ready</small>
+                        </div>
+                    </div>
+                    <div class="step {% if order.status in ['Shipped', 'Delivered'] %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-shipping-fast"></i></div>
+                        <div class="step-text">
+                            <h6>Shipped</h6>
+                            <small class="text-muted">On the way</small>
+                            {% if order.shipped_at %}
+                            <div class="step-date">{{ order.shipped_at.strftime('%b %d') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="step {% if order.status == 'Delivered' %}active{% endif %}">
+                        <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="step-text">
+                            <h6>Delivered</h6>
+                            <small class="text-muted">At your door</small>
+                            {% if order.delivered_at %}
+                            <div class="step-date">{{ order.delivered_at.strftime('%b %d') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Shipping Info -->
+                <div class="col-md-5 mb-4 mb-md-0">
+                    <div class="card shadow-sm border-0 h-100 rounded-3">
+                        <div class="card-body p-4">
+                            <h5 class="card-title fw-bold mb-4">Shipping Details</h5>
+                            <div class="d-flex mb-3">
+                                <i class="fas fa-map-marker-alt text-danger me-3 mt-1"></i>
+                                <div>
+                                    <p class="mb-0 fw-bold">{{ order.customer_name }}</p>
+                                    <p class="text-muted mb-0">{{ order.address_line }}<br>{{ order.city }}, {{
+                                        order.state }} - {{ order.pincode }}</p>
+                                </div>
+                            </div>
+
+                            {% if order.status in ['Shipped', 'Delivered'] %}
+                            <hr class="my-4 op-1">
+                            <h6 class="fw-bold mb-3">Carrier & Tracking</h6>
+                            <div class="bg-light p-3 rounded-3 border">
+                                <p class="mb-1 d-flex justify-content-between">
+                                    <span class="text-muted">Carrier:</span>
+                                    <span class="fw-bold text-dark">{{ order.carrier or 'Standard Shipping' }}</span>
+                                </p>
+                                <p class="mb-0 d-flex justify-content-between">
+                                    <span class="text-muted">Tracking ID:</span>
+                                    <span class="fw-bold text-primary">{{ order.tracking_number }}</span>
+                                </p>
+                                <a href="#" class="btn btn-primary btn-sm w-100 mt-3 rounded-pill py-2">
+                                    <i class="fas fa-external-link-alt me-2"></i>Link to {{ order.carrier or 'Carrier'
+                                    }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="col-md-7">
+                    <div class="card shadow-sm border-0 rounded-3">
+                        <div class="card-body p-4">
+                            <h5 class="card-title fw-bold mb-4">Items in Package</h5>
+                            <div class="item-list">
+                                {% for item in items %}
+                                <div
+                                    class="d-flex align-items-center mb-3 p-3 bg-light rounded-3 border-0 transition-hover">
+                                    <img src="{{ item.image_url }}" alt="{{ item.name }}"
+                                        class="rounded me-3 shadow-sm border"
+                                        style="width: 70px; height: 70px; object-fit: cover;">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-600">{{ item.name }}</h6>
+                                        <p class="text-muted mb-0 small">Qty: {{ item.quantity }} × ₹{{ item.unit_price
+                                            | inr }}</p>
+                                    </div>
+                                    <div class="fw-bold text-dark">
+                                        ₹{{ (item.quantity * item.unit_price) | inr }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <hr class="my-4">
+                            <div class="d-flex justify-content-between align-items-center px-2">
+                                <span class="h5 mb-0 text-muted">Total Paid</span>
+                                <span class="h4 mb-0 fw-bold text-dark">₹{{ order.total_amount | inr }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tracking-timeline {
+        position: relative;
+    }
+
+    .tracking-timeline::before {
+        content: '';
+        position: absolute;
+        top: 25px;
+        left: 30px;
+        right: 30px;
+        height: 4px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+
+    @media (max-width: 767.98px) {
+        .tracking-timeline::before {
+            display: none;
+        }
+
+        .step {
+            flex-direction: row !important;
+            text-align: left !important;
+            margin-bottom: 2rem;
+            gap: 1.5rem;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            bottom: -20px;
+            width: 3px;
+            background: #e9ecef;
+            z-index: 1;
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step.active::after {
+            background: var(--primary);
+        }
+    }
+
+    .step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+    }
+
+    .step-icon {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: #fff;
+        border: 4px solid #e9ecef;
+        color: #adb5bd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .step.active .step-icon {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+    }
+
+    .step-text h6 {
+        margin-bottom: 0.25rem;
+        font-weight: 700;
+        transition: color 0.3s ease;
+    }
+
+    .step.active h6 {
+        color: var(--primary);
+    }
+
+    .step-date {
+        margin-top: 0.5rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--primary);
+    }
+
+    .transition-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .transition-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .op-1 {
+        opacity: 0.1;
+    }
+
+    .fw-600 {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

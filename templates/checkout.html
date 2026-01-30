@@ -46,12 +46,12 @@
       {% for it in items %}
       <li>
         <span>{{ it.product.name }} × {{ it.qty }}</span>
-        <strong>₹{{ "%.2f"|format(it.line_total) }}</strong>
+        <strong>₹{{ it.line_total | inr }}</strong>
       </li>
       {% endfor %}
       <li class="total">
         <span>Total</span>
-        <strong>₹{{ "%.2f"|format(subtotal) }}</strong>
+        <strong>₹{{ subtotal | inr }}</strong>
       </li>
     </ul>
   </div>
