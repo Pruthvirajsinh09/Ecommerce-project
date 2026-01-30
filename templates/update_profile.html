@@ -3,126 +3,104 @@
 {% block title %}Update Profile{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <h4 class="mb-0">
-            <i class="fas fa-user-edit me-2"></i> Update Profile
-          </h4>
+<div class="container" style="max-width: 800px; padding: 4rem 1rem;">
+  <div class="profile-card"
+    style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); overflow: hidden;">
+    <div class="profile-header"
+      style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 2rem; color: white; text-align: center;">
+      <h1 style="font-size: 2rem; margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">
+        <i class="fas fa-user-edit" style="margin-right: 0.75rem;"></i> Update Profile
+      </h1>
+      <p style="opacity: 0.9;">Keep your account information up to date</p>
+    </div>
+
+    <div class="profile-body" style="padding: 2.5rem;">
+      <form method="POST" action="{{ url_for('update_profile') }}"
+        style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Name -->
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Full
+            Name</label>
+          <input type="text" name="name" value="{{ user.name if user and user.name is defined else '' }}" required
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s;">
         </div>
 
-        <div class="card-body">
-          <form method="POST" action="{{ url_for('update_profile') }}">
-            <!-- Name -->
-            <div class="mb-3">
-              <label for="name" class="form-label">Full Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                class="form-control"
-                value="{{ user.name if user and user.name is defined else '' }}"
-                required
-              >
-            </div>
-
-            <!-- Email -->
-            <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                class="form-control"
-                value="{{ user.email if user and user.email is defined else '' }}"
-                required
-              >
-            </div>
-
-            <!-- Address -->
-            <div class="mb-3">
-              <label for="address" class="form-label">Address</label>
-              <textarea
-                id="address"
-                name="address"
-                class="form-control"
-                rows="2"
-              >{{ user.address if user and user.address is defined else '' }}</textarea>
-            </div>
-
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="city" class="form-label">City</label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  class="form-control"
-                  value="{{ user.city if user and user.city is defined else '' }}"
-                >
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="state" class="form-label">State</label>
-                <input
-                  type="text"
-                  id="state"
-                  name="state"
-                  class="form-control"
-                  value="{{ user.state if user and user.state is defined else '' }}"
-                >
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="pincode" class="form-label">Pincode</label>
-                <input
-                  type="text"
-                  id="pincode"
-                  name="pincode"
-                  class="form-control"
-                  value="{{ user.pincode if user and user.pincode is defined else '' }}"
-                >
-              </div>
-            </div>
-
-            <!-- Optional phone -->
-            <div class="mb-3">
-              <label for="phone" class="form-label">Phone (Optional)</label>
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                class="form-control"
-                value="{{ user.phone if user and user.phone is defined else '' }}"
-              >
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-              <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Back to Profile
-              </a>
-              <button type="submit" class="btn btn-success px-4">
-                <i class="fas fa-save me-1"></i> Save Changes
-              </button>
-            </div>
-          </form>
+        <!-- Email -->
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Email</label>
+          <input type="email" name="email" value="{{ user.email if user and user.email is defined else '' }}" required
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s;">
         </div>
 
-        <div class="card-footer text-muted small">
-          <i class="fas fa-info-circle me-1"></i>
-          Make sure your details match your billing and warranty information.
+        <!-- Address -->
+        <div class="form-group">
+          <label
+            style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Address</label>
+          <textarea name="address" rows="3"
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s; resize: vertical;">{{ user.address if user and user.address is defined else '' }}</textarea>
         </div>
-      </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem;">
+          <div class="form-group">
+            <label
+              style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">City</label>
+            <input type="text" name="city" value="{{ user.city if user and user.city is defined else '' }}"
+              style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s;">
+          </div>
+          <div class="form-group">
+            <label
+              style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">State</label>
+            <input type="text" name="state" value="{{ user.state if user and user.state is defined else '' }}"
+              style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s;">
+          </div>
+          <div class="form-group">
+            <label
+              style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Pincode</label>
+            <input type="text" name="pincode" value="{{ user.pincode if user and user.pincode is defined else '' }}"
+              style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s;">
+          </div>
+        </div>
+
+        <!-- Optional phone -->
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Phone
+            (Optional)</label>
+          <input type="text" name="phone" value="{{ user.phone if user and user.phone is defined else '' }}"
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; transition: all 0.2s;">
+        </div>
+
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 2rem; border-top: 1px solid var(--border-color); gap: 1rem;">
+          <a href="{{ url_for('profile') }}" class="btn-outline"
+            style="text-decoration: none; padding: 0.85rem 1.75rem; border: 2px solid var(--border-color); border-radius: var(--radius); color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to Profile
+          </a>
+          <button type="submit" class="btn-primary"
+            style="padding: 0.85rem 2rem; background: var(--success); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="profile-footer"
+      style="padding: 1.5rem 2.5rem; background: var(--gray-100); color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color);">
+      <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+      Make sure your details match your billing and warranty information.
     </div>
   </div>
+</div>
+</div>
+</div>
+</div>
 </div>
 
 {# Optional: Font Awesome if not already in base.html #}
 {% if not request.cookies.get('fa_loaded') %}
-  <script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
-  <script>
-    document.cookie = "fa_loaded=1; path=/; max-age=86400";
-  </script>
+<script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
+<script>
+  document.cookie = "fa_loaded=1; path=/; max-age=86400";
+</script>
 {% endif %}
 
 {% endblock %}

@@ -1,18 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-  <h2>Email verification</h2>
-  <p>A 6-character code was sent to <strong>{{ email }}</strong>. Enter it below.</p>
-  <form method="POST" action="{{ url_for('verify_code', token=token) }}">
-    <div class="form-group">
-      <label for="code">Verification code</label>
-      <input id="code" name="code" type="text" maxlength="6" required class="form-control">
+<div class="container" style="max-width: 500px; padding: 4rem 1rem;">
+  <div class="auth-card"
+    style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 3rem; text-align: center; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color);">
+    <div
+      style="width: 70px; height: 70px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem;">
+      <i class="fas fa-envelope-open-text"></i>
     </div>
-    <button class="btn btn-primary" type="submit">Verify</button>
-  </form>
-  <hr>
-  <p>
-    Didn't receive it? <a href="{{ url_for('register') }}">Register again</a> (this will send a new code).
-  </p>
+    <h2 style="color: var(--text-main); font-size: 1.75rem; margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">
+      Email Verification</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">A 6-character code was sent to <strong
+        style="color: var(--text-main);">{{ email }}</strong>. Enter it below.</p>
+
+    <form method="POST" action="{{ url_for('verify_code', token=token) }}"
+      style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div style="margin: 0;">
+        <label for="code"
+          style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600; text-align: left;">Verification
+          code</label>
+        <input id="code" name="code" type="text" maxlength="6" required
+          style="width: 100%; padding: 1rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius); font-size: 1.5rem; text-align: center; font-weight: 700; letter-spacing: 5px; outline: none; transition: all 0.2s;"
+          placeholder="••••••" autofocus>
+      </div>
+
+      <button type="submit" class="btn-primary"
+        style="padding: 1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+        Verify Email
+      </button>
+    </form>
+
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Didn't receive it? <a href="{{ url_for('register') }}"
+          style="color: var(--primary); text-decoration: none; font-weight: 600;">Register again</a> to resend.
+      </p>
+    </div>
+  </div>
 </div>
 {% endblock %}

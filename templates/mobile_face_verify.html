@@ -1,67 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mobile Face Verification</title>
     <style>
+        :root {
+            --primary: #007bff;
+            --primary-dark: #0056b3;
+            --bg-body: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #333;
+            --text-muted: #666;
+            --border-color: #ddd;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #cbd5e1;
+            --border-color: #334155;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             text-align: center;
             padding: 20px;
-            background: #f0f2f5;
+            background: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
         }
+
         .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 450px;
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
+
         h1 {
-            color: #333;
-            margin-bottom: 20px;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
         }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
         #video {
             width: 100%;
-            max-width: 400px;
-            border-radius: 8px;
-            margin: 20px auto;
+            border-radius: var(--radius);
+            margin: 0 auto;
             background: #000;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border: 2px solid var(--primary);
         }
+
         button {
-            background: #007bff;
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 6px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 50px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 2rem;
+            width: 100%;
+            transition: all 0.3s;
         }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
         button:disabled {
-            background: #ccc;
+            background: var(--text-muted);
+            opacity: 0.5;
+            cursor: not-allowed;
         }
+
         #status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: bold;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: var(--radius);
+            font-weight: 600;
         }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
     </style>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </head>
+
 <body>
     <div class="container">
         <h1>📱 Verify Your Face</h1>
         <p>Please allow camera access to continue.</p>
-        
+
         <video id="video" autoplay playsinline></video>
-        
+
         <button id="verify-btn">Capture & Verify</button>
-        
+
         <div id="status" style="display:none;"></div>
     </div>
 
@@ -74,7 +145,7 @@
         // Initialize camera
         async function initCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
+                stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'user' }  // Front camera
                 });
                 video.srcObject = stream;
@@ -125,7 +196,7 @@
 
                 if (result.ok) {
                     showSuccess('✅ Face verified! Logging you in...');
-                    
+
                     // Notify main system (admin browser) via polling or WebSocket
                     // For now, just redirect or close
                     setTimeout(() => {
@@ -164,4 +235,5 @@
         button.addEventListener('click', captureAndVerify);
     </script>
 </body>
+
 </html>

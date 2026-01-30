@@ -529,6 +529,7 @@ def send_warranty_expiration_reminders():
 @app.route("/admin")
 @admin_required
 def admin_dashboard():
+    # 1. Product List
     products = fetchall(
         "SELECT p.*, "
         "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
@@ -536,7 +537,68 @@ def admin_dashboard():
         "FROM products p JOIN categories c ON c.id=p.category_id ORDER BY p.created_at DESC"
     )
     cats = fetchall("SELECT * FROM categories ORDER BY name")
-    return render_template("admin_dashboard.html", products=products, categories=cats)
+
+    # 2. Key Metrics
+    # Total Revenue
+    rev_row = fetchone("SELECT SUM(total_amount) as total FROM orders")
+    total_revenue = rev_row["total"] if rev_row and rev_row["total"] else Decimal("0.00")
+
+    # Total Users
+    user_row = fetchone("SELECT COUNT(*) as cnt FROM users")
+    total_users = user_row["cnt"] if user_row else 0
+
+    # Low Stock
+    stock_row = fetchone("SELECT COUNT(*) as cnt FROM products WHERE stock < 10")
+    low_stock = stock_row["cnt"] if stock_row else 0
+    
+    # Pending Claims (Safe check if table exists)
+    pending_claims = 0
+    try:
+        claim_row = fetchone("SELECT COUNT(*) as cnt FROM warranty_claims WHERE status='pending'")
+        if claim_row:
+            pending_claims = claim_row["cnt"]
+    except Exception:
+        pass # Table might not exist yet
+
+    # 3. Chart Data
+    # Sales Last 7 Days
+    sales_data = fetchall("""
+        SELECT DATE(created_at) as dt, SUM(total_amount) as total 
+        FROM orders 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY DATE(created_at)
+        ORDER BY dt ASC
+    """)
+    # Format for Chart.js
+    chart_dates = [row['dt'].strftime('%b %d') for row in sales_data]
+    chart_sales = [float(row['total']) for row in sales_data]
+
+    # Top Categories (by product count)
+    cat_data = fetchall("""
+        SELECT c.name, COUNT(p.id) as cnt 
+        FROM categories c 
+        LEFT JOIN products p ON p.category_id = c.id 
+        GROUP BY c.id 
+        ORDER BY cnt DESC LIMIT 5
+    """)
+    chart_cat_labels = [row['name'] for row in cat_data]
+    chart_cat_counts = [row['cnt'] for row in cat_data]
+
+    return render_template("admin_dashboard.html", 
+                           products=products, 
+                           categories=cats,
+                           metrics={
+                               "revenue": total_revenue,
+                               "users": total_users,
+                               "low_stock": low_stock,
+                               "pending_claims": pending_claims
+                           },
+                           charts={
+                               "dates": chart_dates,
+                               "sales": chart_sales,
+                               "cat_labels": chart_cat_labels,
+                               "cat_counts": chart_cat_counts
+                           })
 
 @app.route("/admin/product/new", methods=["POST"])
 @admin_required
@@ -772,6 +834,36 @@ def category(slug):
         (slug,),
     )
     return render_template("category.html", category=cat, products=prods)
+
+@app.route("/product/<int:pid>")
+def product_detail(pid):
+    # Fetch product with category info
+    product = fetchone(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name, c.slug as category_slug "
+        "FROM products p "
+        "JOIN categories c ON c.id = p.category_id "
+        "WHERE p.id = %s",
+        (pid,)
+    )
+    
+    if not product:
+        abort(404)
+        
+    # Fetch related products (same category, excluding current)
+    related_products = fetchall(
+        "SELECT p.*, "
+        "CASE WHEN p.image_blob IS NOT NULL THEN CONCAT('/product-image/', p.id) ELSE p.image_url END AS image_url, "
+        "c.name AS category_name "
+        "FROM products p "
+        "JOIN categories c ON c.id = p.category_id "
+        "WHERE p.category_id = %s AND p.id != %s "
+        "ORDER BY p.created_at DESC LIMIT 4",
+        (product["category_id"], pid)
+    )
+    
+    return render_template("product_detail.html", product=product, related_products=related_products)
 
 @app.route("/electronics")
 def electronics():
@@ -1256,6 +1348,42 @@ def profile():
     except Exception as e:
         app.logger.warning(f"Site settings table might not exist: {e}")
         shop_info = {}
+
+    # Get wishlist items for count
+    wish = []
+    try:
+        wish = fetchall("SELECT * FROM wishlist WHERE user_id = %s", (user["id"],))
+    except Exception as e:
+        app.logger.warning(f"Wishlist fetch error: {e}")
+        wish = []
+
+    # Calculate Total Spent
+    total_spent = sum(Decimal(str(order["total"])) for order in orders_list)
+
+    # Calculate Spending History (Last 6 Months)
+    # Get last 6 month names
+    today = datetime.now().date()
+    months = []
+    spending_data = []
+
+    for i in range(5, -1, -1):
+        d = today - timedelta(days=i*30) # Approx
+        month_name = d.strftime("%b")
+        year_month = d.strftime("%Y-%m")
+        months.append(month_name)
+        
+        # Sum orders for this month
+        monthly_total = Decimal("0.00")
+        for order in orders_list:
+            # check the datetime field, it is named 'date_time'
+            if isinstance(order["date_time"], str):
+                 order_date = datetime.strptime(str(order["date_time"]), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m")
+            else:
+                 order_date = order["date_time"].strftime("%Y-%m")
+                 
+            if order_date == year_month:
+                monthly_total += Decimal(str(order["total"]))
+        spending_data.append(float(monthly_total))
     
     return render_template("profile.html", 
                          user=user_details, 
@@ -1264,7 +1392,11 @@ def profile():
                          shop_name=shop_info.get("shop_name", "Shop Ease"),
                          shop_logo=shop_info.get("shop_logo", None),
                          shop_tagline=shop_info.get("shop_tagline", None),
-                         shop_contact=shop_info.get("shop_contact", None))
+                         shop_contact=shop_info.get("shop_contact", None),
+                         total_spent=total_spent,
+                         wishlist_count=len(wish),
+                         chart_labels=months,
+                         chart_data=spending_data)
 
 @app.route("/profile/face-request-otp")
 @login_required
@@ -1897,4 +2029,4 @@ def debug_user():
     return "<br>".join(output)
 
 if __name__ == "__main__":
-    app.run(host='10.152.85.231', port=5000, debug=True, ssl_context='adhoc')
+    app.run(host='192.168.0.143', port=5000, debug=True, ssl_context='adhoc')

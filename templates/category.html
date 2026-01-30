@@ -49,112 +49,91 @@
 
   <!-- Category Description -->
   <div class="category-description"
-    style="background: white; padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 2rem;">
-    <p style="color: var(--gray-600); text-align: center;">
+    style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 2rem;">
+    <p style="color: var(--text-muted); text-align: center;">
       Browse our selection of {{ category.name|lower }} products. All products come with face recognition warranty
       support.
     </p>
   </div>
 
   <!-- Products Grid -->
+  <!-- Products Grid -->
   {% if products %}
-  <div class="products-grid"
-    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+  <div class="product-grid">
     {% for p in products %}
-    <div class="product-card"
-      style="background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.3s, box-shadow 0.3s; position: relative;">
+    <div class="product-card" data-aos="fade-up" data-product-url="{{ url_for('product_detail', pid=p.id) }}">
       <!-- Product Image -->
-      <div class="product-image" style="height: 200px; overflow: hidden; position: relative;">
-        <img src="{{ p.image_url }}" alt="{{ p.name }}"
-          style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+      <div class="product-image-wrapper">
+        <img src="{{ p.image_url }}" alt="{{ p.name }}" class="product-image">
 
-        <!-- Product Badges -->
-        <div class="product-badges" style="position: absolute; top: 1rem; left: 1rem; display: flex; gap: 0.5rem;">
+        <div class="product-badges">
           {% if p.warranty_years and p.warranty_years > 0 %}
-          <span class="badge"
-            style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
-            {{ p.warranty_years }} Year{% if p.warranty_years != 1 %}s{% endif %} Warranty
+          <span class="warranty-badge">
+            <i class="fas fa-shield-alt"></i>
+            {{ p.warranty_years }}Y Warranty
           </span>
           {% endif %}
 
           {% if p.stock <= 5 and p.stock> 0 %}
-            <span class="badge"
-              style="background: var(--warning); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+            <span class="warranty-badge"
+              style="background: var(--warning); box-shadow: 0 4px 12px rgba(250, 176, 5, 0.4);">
               Low Stock
             </span>
             {% endif %}
 
             {% if p.stock == 0 %}
-            <span class="badge"
-              style="background: var(--danger); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+            <span class="warranty-badge"
+              style="background: var(--danger); box-shadow: 0 4px 12px rgba(224, 49, 49, 0.4);">
               Out of Stock
             </span>
             {% endif %}
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions"
-          style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; opacity: 0; transition: opacity 0.3s;">
+        <!-- Quick View Button -->
+        <div class="quick-view-container">
+          <button class="quick-view-btn" title="Quick View">
+            <i class="fas fa-eye"></i> Quick View
+          </button>
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <div class="product-category">{{ p.category_name }}</div>
+        <h3 class="product-title">{{ p.name }}</h3>
+
+        <div class="product-price-wrapper">
+          <span class="product-price">₹{{ "%.2f"|format(p.price) }}</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="product-actions">
+          {% if p.stock > 0 %}
+          <button type="button" class="add-to-cart-btn" onclick="ShopEase.addToCart('{{ p.id }}', 1)">
+            <i class="fas fa-cart-plus"></i>
+            <span>Add to Cart</span>
+          </button>
+          {% else %}
+          <button class="add-to-cart-btn" disabled
+            style="background: var(--gray-400); transform: none; box-shadow: none; cursor: not-allowed;">
+            <i class="fas fa-ban"></i>
+            <span>No Stock</span>
+          </button>
+          {% endif %}
+
           {% if me %}
-          <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" style="display: inline;">
-            <button type="submit" class="action-btn"
-              style="width: 36px; height: 36px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--danger); font-size: 1rem; transition: all 0.2s;">
+          <form method="POST" action="{{ url_for('add_to_wishlist', product_id=p.id) }}" class="wishlist-form">
+            <button type="submit" class="wishlist-btn" title="Add to Wishlist">
               <i class="fas fa-heart"></i>
             </button>
           </form>
           {% endif %}
         </div>
-      </div>
 
-      <!-- Product Info -->
-      <div class="product-info" style="padding: 1.5rem;">
-        <div class="product-category" style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 0.5rem;">
-          {{ p.category_name }}
-        </div>
-        <h3 class="product-title"
-          style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--dark);">
-          {{ p.name }}
-        </h3>
-
-        {% if p.description %}
-        <p class="product-description"
-          style="color: var(--gray-600); margin-bottom: 1rem; font-size: 0.875rem; line-height: 1.5;">
-          {{ p.description[:80] }}{% if p.description|length > 80 %}...{% endif %}
-        </p>
-        {% endif %}
-
-        <div class="product-price"
-          style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 1.5rem;">
-          ₹{{ "%.2f"|format(p.price) }}
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="product-actions" style="display: flex; gap: 0.75rem;">
-          {% if p.stock > 0 %}
-          <form method="POST" action="{{ url_for('add_to_cart', product_id=p.id) }}" style="flex: 1;">
-            <div style="display: flex; gap: 0.5rem;">
-              <input type="number" name="qty" value="1" min="1" max="{{ p.stock }}"
-                style="width: 60px; padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius); text-align: center;">
-              <button type="submit" class="btn-primary"
-                style="flex: 1; background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: background 0.2s;">
-                <i class="fas fa-cart-plus" style="margin-right: 0.5rem;"></i>
-                Add to Cart
-              </button>
-            </div>
-          </form>
-          {% else %}
-          <button disabled class="btn-disabled"
-            style="flex: 1; background: var(--gray-300); color: var(--gray-600); border: none; padding: 0.75rem; border-radius: var(--radius); font-weight: 600; cursor: not-allowed;">
-            Out of Stock
-          </button>
-          {% endif %}
-        </div>
-
-        <!-- Stock Info -->
         {% if p.stock > 0 %}
-        <div class="stock-info" style="margin-top: 1rem; font-size: 0.875rem; color: var(--gray-600);">
-          <i class="fas fa-box" style="margin-right: 0.5rem;"></i>
-          {{ p.stock }} in stock
+        <div
+          style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem;">
+          <i class="fas fa-box"></i> {{ p.stock }} in stock
         </div>
         {% endif %}
       </div>
@@ -164,13 +143,13 @@
   {% else %}
   <!-- Empty Products State -->
   <div
-    style="text-align: center; padding: 4rem 2rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-bottom: 3rem;">
+    style="text-align: center; padding: 4rem 2rem; background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-bottom: 3rem;">
     <div
       style="width: 120px; height: 120px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--gray-400);">
       <i class="fas fa-box-open fa-3x"></i>
     </div>
-    <h2 style="font-size: 1.75rem; color: var(--dark); margin-bottom: 1rem;">No Products Available</h2>
-    <p style="color: var(--gray-600); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+    <h2 style="font-size: 1.75rem; color: var(--text-main); margin-bottom: 1rem;">No Products Available</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
       There are currently no products in this category. Check back soon or browse other categories.
     </p>
     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
@@ -190,9 +169,9 @@
 
   <!-- Category Features -->
   <div class="category-features"
-    style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 3rem;">
+    style="background: var(--gray-100); padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 3rem;">
     <h2
-      style="text-align: center; font-size: 1.5rem; color: var(--dark); margin-bottom: 2rem; font-family: 'Poppins', sans-serif;">
+      style="text-align: center; font-size: 1.5rem; color: var(--text-main); margin-bottom: 2rem; font-family: 'Poppins', sans-serif;">
       Why Shop {{ category.name }} with Us?
     </h2>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
@@ -201,9 +180,10 @@
           style="width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
           <i class="fas fa-shield-alt"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Secure Warranty
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Secure
+          Warranty
         </h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">Face recognition warranty claims for easy support</p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Face recognition warranty claims for easy support</p>
       </div>
 
       <div class="feature" style="text-align: center;">
@@ -211,8 +191,10 @@
           style="width: 60px; height: 60px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
           <i class="fas fa-truck"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Fast Delivery</h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">Quick shipping on all {{ category.name|lower }} products
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Fast Delivery
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Quick shipping on all {{ category.name|lower }}
+          products
         </p>
       </div>
 
@@ -221,8 +203,9 @@
           style="width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
           <i class="fas fa-undo"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Easy Returns</h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">30-day return policy on eligible items</p>
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Easy Returns
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">30-day return policy on eligible items</p>
       </div>
 
       <div class="feature" style="text-align: center;">
@@ -230,9 +213,10 @@
           style="width: 60px; height: 60px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.25rem;">
           <i class="fas fa-headset"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--dark);">Expert Support
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Expert
+          Support
         </h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">Specialized support for {{ category.name|lower }}
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Specialized support for {{ category.name|lower }}
           products</p>
       </div>
     </div>
@@ -310,6 +294,21 @@
         card.style.opacity = '1';
         card.style.transform = 'translateY(0)';
       }, index * 100);
+
+      // Add click event for navigation
+      card.addEventListener('click', function (e) {
+        // Don't trigger if clicking on buttons or links
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' ||
+          e.target.closest('button') || e.target.closest('a')) {
+          return;
+        }
+
+        // Navigate to product detail
+        const url = this.getAttribute('data-product-url');
+        if (url) {
+          window.location.href = url;
+        }
+      });
     });
 
     // Add to cart animation

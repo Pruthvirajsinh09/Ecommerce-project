@@ -1,42 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container" style="max-width:560px">
-  <h2 class="section-title">Create Account</h2>
+<div class="container" style="max-width:450px; padding: 4rem 1rem;">
+  <div class="auth-card"
+    style="background: var(--bg-card); padding: 2.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--border-color);">
+    <h2
+      style="font-size: 2rem; color: var(--text-main); margin-bottom: 2rem; text-align: center; font-family: 'Poppins', sans-serif;">
+      Create Account</h2>
 
-  <input type="hidden" id="captured_image" name="captured_image">
+    <input type="hidden" id="captured_image" name="captured_image">
 
-  <form id="register-form" method="post">
-    <label>Full name<input type="text" name="name" required></label>
-    <label>Email<input type="email" name="email" required></label>
-    <label>Password<input type="password" name="password"></label>
+    <form id="register-form" method="post" style="display: flex; flex-direction: column; gap: 1.25rem;">
+      <div class="form-group">
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 500;">Full
+          name</label>
+        <input type="text" name="name" required
+          style="width: 100%; padding: 0.75rem; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+      </div>
+      <div class="form-group">
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 500;">Email</label>
+        <input type="email" name="email" required
+          style="width: 100%; padding: 0.75rem; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+      </div>
+      <div class="form-group">
+        <label
+          style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 500;">Password</label>
+        <input type="password" name="password"
+          style="width: 100%; padding: 0.75rem; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+      </div>
 
-    <div id="camera-section" style="display:none; margin-top:20px; text-align:center;">
-      <h5>Look at the camera — position your face</h5>
-      <video id="video" width="320" height="240" autoplay playsinline style="border:1px solid #ccc; border-radius:8px;"></video>
-      <br><br>
-      <button type="button" id="capture-btn" class="btn">✅ Capture & Register</button>
-    </div>
+      <div id="camera-section" style="display:none; margin-top:1.5rem; text-align:center;">
+        <h5 style="color: var(--text-main); margin-bottom: 1rem;">Look at the camera — position your face</h5>
+        <video id="video" width="100%" height="auto" autoplay playsinline
+          style="border:2px solid var(--primary); border-radius:12px; max-width: 320px;"></video>
+        <br><br>
+        <button type="button" id="capture-btn" class="btn-primary"
+          style="width: 100%; padding: 0.85rem; border: none; border-radius: var(--radius); background: var(--success); color: white; font-weight: 600; cursor: pointer;">✅
+          Capture & Register</button>
+      </div>
 
-    <button type="button" id="register-btn" class="btn">Register (Capture Face)</button>
-  </form>
+      <button type="button" id="register-btn" class="btn-primary"
+        style="width: 100%; padding: 0.85rem; border: none; border-radius: var(--radius); background: var(--primary); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;">Register
+        (Capture Face)</button>
+    </form>
+  </div>
 </div>
 
 <script>
-document.getElementById('register-btn').addEventListener('click', async () => {
+  document.getElementById('register-btn').addEventListener('click', async () => {
     const video = document.getElementById('video');
     const cameraSection = document.getElementById('camera-section');
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        video.srcObject = stream;
-        cameraSection.style.display = 'block';
-        document.getElementById('register-btn').style.display = 'none';
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = stream;
+      cameraSection.style.display = 'block';
+      document.getElementById('register-btn').style.display = 'none';
     } catch (err) {
-        alert('Camera access denied: ' + (err.message || 'Permission blocked'));
+      alert('Camera access denied: ' + (err.message || 'Permission blocked'));
     }
-});
+  });
 
-document.getElementById('capture-btn').addEventListener('click', () => {
+  document.getElementById('capture-btn').addEventListener('click', () => {
     const video = document.getElementById('video');
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth || 320;
@@ -53,6 +77,6 @@ document.getElementById('capture-btn').addEventListener('click', () => {
 
     // Submit form
     document.getElementById('register-form').submit();
-});
+  });
 </script>
 {% endblock %}

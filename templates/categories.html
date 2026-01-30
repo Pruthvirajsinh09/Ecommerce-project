@@ -4,11 +4,11 @@
 <div class="container">
   <!-- Page Header -->
   <div class="page-header" style="text-align: center; margin-bottom: 3rem;">
-    <h1 style="font-size: 2.5rem; color: var(--dark); margin-bottom: 1rem; font-family: 'Poppins', sans-serif;">
+    <h1 style="font-size: 2.5rem; color: var(--text-main); margin-bottom: 1rem; font-family: 'Poppins', sans-serif;">
       <i class="fas fa-th-large" style="color: var(--primary); margin-right: 0.75rem;"></i>
       Shop by Category
     </h1>
-    <p style="font-size: 1.125rem; color: var(--gray-600); max-width: 600px; margin: 0 auto;">
+    <p style="font-size: 1.125rem; color: var(--text-muted); max-width: 600px; margin: 0 auto;">
       Browse our wide selection of products across different categories
     </p>
   </div>
@@ -45,16 +45,16 @@
       </div>
 
       <!-- Category Info -->
-      <div class="category-info" style="padding: 1.5rem; background: white; position: relative;">
-        <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--dark); margin-bottom: 0.5rem;">
+      <div class="category-info" style="padding: 1.5rem; background: var(--bg-card); position: relative;">
+        <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
           {{ c.name }}
         </h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 1rem;">
+        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
           Browse all {{ c.name }} products
         </p>
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <span class="badge"
-            style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+            style="background: var(--gray-100); color: var(--text-muted); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
             <i class="fas fa-box" style="margin-right: 0.25rem;"></i>
             Shop Now
           </span>
@@ -74,22 +74,22 @@
     </a>
     {% else %}
     <div
-      style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow);">
-      <i class="fas fa-th-large fa-3x" style="color: var(--gray-300); margin-bottom: 1rem;"></i>
-      <h3 style="color: var(--dark); margin-bottom: 0.5rem;">No Categories Found</h3>
-      <p style="color: var(--gray-600);">Categories will appear here once added</p>
+      style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
+      <i class="fas fa-th-large fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+      <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">No Categories Found</h3>
+      <p style="color: var(--text-muted);">Categories will appear here once added</p>
     </div>
     {% endfor %}
   </div>
 
   <!-- Features Section -->
   <div class="features-section"
-    style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 3rem; border-radius: var(--radius-lg); margin-bottom: 3rem;">
+    style="background: var(--gray-100); padding: 3rem; border-radius: var(--radius-lg); margin-bottom: 3rem;">
     <div style="text-align: center; margin-bottom: 2.5rem;">
-      <h2 style="font-size: 1.75rem; color: var(--dark); margin-bottom: 1rem; font-family: 'Poppins', sans-serif;">
+      <h2 style="font-size: 1.75rem; color: var(--text-main); margin-bottom: 1rem; font-family: 'Poppins', sans-serif;">
         Why Shop With Us?
       </h2>
-      <p style="color: var(--gray-600); max-width: 600px; margin: 0 auto;">
+      <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">
         Experience the future of shopping with our innovative features
       </p>
     </div>
@@ -100,9 +100,10 @@
           style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; font-size: 1.5rem;">
           <i class="fas fa-user-shield"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--dark); margin-bottom: 0.75rem;">Face Recognition
+        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.75rem;">Face
+          Recognition
           Warranty</h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">No paperwork needed. Your face is your warranty claim
+        <p style="color: var(--text-muted); font-size: 0.875rem;">No paperwork needed. Your face is your warranty claim
           verification.</p>
       </div>
 
@@ -111,9 +112,9 @@
           style="width: 70px; height: 70px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; font-size: 1.5rem;">
           <i class="fas fa-shipping-fast"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--dark); margin-bottom: 0.75rem;">Fast & Free
+        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.75rem;">Fast & Free
           Delivery</h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">Quick and reliable shipping with free delivery on most
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Quick and reliable shipping with free delivery on most
           orders.</p>
       </div>
 
@@ -122,8 +123,9 @@
           style="width: 70px; height: 70px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; font-size: 1.5rem;">
           <i class="fas fa-undo-alt"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--dark); margin-bottom: 0.75rem;">Easy Returns</h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">Hassle-free returns within 30 days for most products.
+        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.75rem;">Easy Returns
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Hassle-free returns within 30 days for most products.
         </p>
       </div>
 
@@ -132,8 +134,9 @@
           style="width: 70px; height: 70px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; font-size: 1.5rem;">
           <i class="fas fa-headset"></i>
         </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--dark); margin-bottom: 0.75rem;">24/7 Support</h3>
-        <p style="color: var(--gray-600); font-size: 0.875rem;">Our customer support team is always here to help you.
+        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.75rem;">24/7 Support
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Our customer support team is always here to help you.
         </p>
       </div>
     </div>

@@ -1,51 +1,65 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-          <h4 class="mb-0">Complete Your Profile</h4>
+<div class="container" style="max-width: 600px; padding: 4rem 1rem;">
+  <div class="auth-card"
+    style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); overflow: hidden;">
+    <div class="auth-header"
+      style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 2rem; color: white; text-align: center;">
+      <h2 style="margin: 0; font-weight: 700; font-family: 'Poppins', sans-serif;">Complete Your Profile</h2>
+    </div>
+    <div class="auth-body" style="padding: 2.5rem;">
+      <p style="color: var(--text-muted); margin-bottom: 2rem; text-align: center;">Please provide your contact and
+        shipping details to continue.</p>
+      <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Mobile Number
+            *</label>
+          <input type="text" name="mobile" placeholder="e.g. 9876543210" required
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius);">
         </div>
-        <div class="card-body">
-          <p class="text-muted">Please provide your contact and shipping details to continue.</p>
-          <form method="POST">
-            <div class="mb-3">
-              <label for="mobile" class="form-label">Mobile Number *</label>
-              <input type="text" class="form-control" id="mobile" name="mobile" placeholder="e.g. 9876543210" required>
-            </div>
 
-            <div class="mb-3">
-              <label for="address_line1" class="form-label">Address Line 1 *</label>
-              <input type="text" class="form-control" id="address_line1" name="address_line1" placeholder="House No., Street" required>
-            </div>
-
-            <div class="mb-3">
-              <label for="address_line2" class="form-label">Address Line 2</label>
-              <input type="text" class="form-control" id="address_line2" name="address_line2" placeholder="Locality, Landmark (optional)">
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="city" class="form-label">City *</label>
-                <input type="text" class="form-control" id="city" name="city" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="state" class="form-label">State *</label>
-                <input type="text" class="form-control" id="state" name="state" required>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="pincode" class="form-label">Pincode *</label>
-              <input type="text" class="form-control" id="pincode" name="pincode" placeholder="e.g. 110001" required>
-            </div>
-
-            <button type="submit" class="btn btn-success w-100">Save & Go to Store</button>
-          </form>
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Address Line
+            1 *</label>
+          <input type="text" name="address_line1" placeholder="House No., Street" required
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius);">
         </div>
-      </div>
+
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Address Line
+            2 (Optional)</label>
+          <input type="text" name="address_line2" placeholder="Locality, Landmark"
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius);">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">City
+              *</label>
+            <input type="text" name="city" required
+              style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius);">
+          </div>
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">State
+              *</label>
+            <input type="text" name="state" required
+              style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius);">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;">Pincode
+            *</label>
+          <input type="text" name="pincode" placeholder="e.g. 110001" required
+            style="width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: var(--radius);">
+        </div>
+
+        <button type="submit" class="btn-primary"
+          style="padding: 1rem; background: var(--success); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; margin-top: 1rem; transition: all 0.3s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+          Save & Go to Store
+        </button>
+      </form>
     </div>
   </div>
 </div>

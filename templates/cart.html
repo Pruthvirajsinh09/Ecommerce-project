@@ -4,20 +4,20 @@
 <div class="container">
   <!-- Page Header -->
   <div class="page-header" style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; color: var(--dark); margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">
+    <h1 style="font-size: 2rem; color: var(--text-main); margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">
       <i class="fas fa-shopping-cart" style="color: var(--primary); margin-right: 0.5rem;"></i>
       Your Shopping Cart
     </h1>
-    <p style="color: var(--gray-600);">Review and manage your items</p>
+    <p style="color: var(--text-muted);">Review and manage your items</p>
   </div>
 
   {% if items %}
   <!-- Cart Items -->
   <div class="cart-container"
-    style="background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 2rem;">
+    style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 2rem;">
     <!-- Cart Header -->
     <div class="cart-header"
-      style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; padding: 1.5rem; background: var(--gray-100); border-bottom: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-800);">
+      style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; padding: 1.5rem; background: var(--gray-100); border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-main);">
       <div>Product</div>
       <div>Price</div>
       <div>Quantity</div>
@@ -29,7 +29,7 @@
     <div id="cart-body">
       {% for it in items %}
       <div class="cart-item" data-id="{{ it.product.id }}"
-        style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; padding: 1.5rem; align-items: center; border-bottom: 1px solid var(--gray-200);">
+        style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; padding: 1.5rem; align-items: center; border-bottom: 1px solid var(--border-color);">
         <!-- Product Info -->
         <div class="product-info" style="display: flex; align-items: center; gap: 1rem;">
           {% if it.product.image_url %}
@@ -42,13 +42,13 @@
           </div>
           {% endif %}
           <div>
-            <h3 style="font-weight: 600; margin-bottom: 0.25rem; color: var(--dark);">{{ it.product.name }}</h3>
-            <p style="color: var(--gray-600); font-size: 0.875rem;">{{ it.product.category_name }}</p>
+            <h3 style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-main);">{{ it.product.name }}</h3>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">{{ it.product.category_name }}</p>
           </div>
         </div>
 
         <!-- Price -->
-        <div class="price" style="font-weight: 600; color: var(--dark);">
+        <div class="price" style="font-weight: 600; color: var(--text-main);">
           ₹{{ "%.2f"|format(it.product.price) }}
         </div>
 
@@ -56,14 +56,14 @@
         <div class="quantity-controls">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <button type="button" class="qty-decrease" data-id="{{ it.product.id }}"
-              style="width: 32px; height: 32px; border: 1px solid var(--gray-300); background: white; border-radius: var(--radius); cursor: pointer;">
+              style="width: 32px; height: 32px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); border-radius: var(--radius); cursor: pointer;">
               <i class="fas fa-minus"></i>
             </button>
             <input type="number" class="qty-input" name="qty_{{ it.product.id }}" data-id="{{ it.product.id }}" min="1"
               value="{{ it.qty }}"
-              style="width: 60px; text-align: center; padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius);">
+              style="width: 60px; text-align: center; padding: 0.5rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); border-radius: var(--radius);">
             <button type="button" class="qty-increase" data-id="{{ it.product.id }}"
-              style="width: 32px; height: 32px; border: 1px solid var(--gray-300); background: white; border-radius: var(--radius); cursor: pointer;">
+              style="width: 32px; height: 32px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); border-radius: var(--radius); cursor: pointer;">
               <i class="fas fa-plus"></i>
             </button>
           </div>
@@ -78,7 +78,7 @@
               {{ it.product.warranty_years }} Year{% if it.product.warranty_years != 1 %}s{% endif %}
             </span>
             <select class="warranty-extend-select" data-product-id="{{ it.product.id }}"
-              style="padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 0.875rem;">
+              style="padding: 0.5rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); border-radius: var(--radius); font-size: 0.875rem;">
               <option value="0">Extend</option>
               <option value="1">+1 Year</option>
               <option value="2">+2 Years</option>
@@ -107,9 +107,9 @@
     </div>
 
     <!-- Empty Cart State -->
-    <div id="empty-cart" style="display: none; padding: 3rem; text-align: center; color: var(--gray-600);">
+    <div id="empty-cart" style="display: none; padding: 3rem; text-align: center; color: var(--text-muted);">
       <i class="fas fa-shopping-cart fa-3x" style="margin-bottom: 1rem; opacity: 0.3;"></i>
-      <h3 style="margin-bottom: 0.5rem;">Your cart is empty</h3>
+      <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Your cart is empty</h3>
       <p>Add some products to get started!</p>
       <a href="{{ url_for('index') }}" class="btn-primary"
         style="display: inline-block; margin-top: 1rem; background: var(--primary); color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius); text-decoration: none; font-weight: 600;">
@@ -120,9 +120,9 @@
 
   <!-- Cart Summary -->
   <div class="cart-summary"
-    style="background: white; border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow);">
+    style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <h3 style="font-size: 1.25rem; color: var(--dark);">Order Summary</h3>
+      <h3 style="font-size: 1.25rem; color: var(--text-main);">Order Summary</h3>
       <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
         ₹<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span>
       </div>
@@ -130,15 +130,16 @@
 
     <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--gray-100); border-radius: var(--radius);">
       <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-        <span style="color: var(--gray-600);">Subtotal</span>
-        <span style="font-weight: 600;">₹<span id="summary-subtotal">{{ "%.2f"|format(subtotal) }}</span></span>
+        <span style="color: var(--text-muted);">Subtotal</span>
+        <span style="font-weight: 600; color: var(--text-main);">₹<span id="summary-subtotal">{{ "%.2f"|format(subtotal)
+            }}</span></span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-        <span style="color: var(--gray-600);">Shipping</span>
-        <span style="font-weight: 600;">Free</span>
+        <span style="color: var(--text-muted);">Shipping</span>
+        <span style="font-weight: 600; color: var(--text-main);">Free</span>
       </div>
       <div style="display: flex; justify-content: space-between; font-size: 1.125rem;">
-        <span style="font-weight: 600;">Total</span>
+        <span style="font-weight: 600; color: var(--text-main);">Total</span>
         <span style="font-weight: 700; color: var(--primary);">₹<span id="summary-total">{{ "%.2f"|format(subtotal)
             }}</span></span>
       </div>
@@ -151,7 +152,7 @@
         <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
       </a>
       <a href="{{ url_for('index') }}" class="btn-secondary"
-        style="flex: 1; display: block; background: var(--gray-100); color: var(--dark); padding: 1rem; border-radius: var(--radius); text-decoration: none; text-align: center; font-weight: 600; transition: background 0.2s;">
+        style="flex: 1; display: block; background: var(--gray-100); color: var(--text-main); padding: 1rem; border-radius: var(--radius); text-decoration: none; text-align: center; font-weight: 600; transition: background 0.2s;">
         Continue Shopping
       </a>
     </div>
@@ -160,11 +161,11 @@
   <!-- Empty Cart -->
   <div style="text-align: center; padding: 4rem 2rem;">
     <div
-      style="width: 120px; height: 120px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--gray-400);">
+      style="width: 120px; height: 120px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-muted);">
       <i class="fas fa-shopping-cart fa-3x"></i>
     </div>
-    <h2 style="font-size: 1.75rem; color: var(--dark); margin-bottom: 1rem;">Your cart is empty</h2>
-    <p style="color: var(--gray-600); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+    <h2 style="font-size: 1.75rem; color: var(--text-main); margin-bottom: 1rem;">Your cart is empty</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
       Looks like you haven't added any items to your cart yet.
     </p>
     <a href="{{ url_for('index') }}" class="btn-primary"
@@ -178,7 +179,7 @@
 
 <style>
   .cart-item:hover {
-    background: var(--gray-50);
+    background: var(--primary-light);
   }
 
   .btn-primary:hover {
@@ -284,18 +285,44 @@
     }
 
     function removeCartItem(productId) {
-      const item = document.querySelector(`.cart-item[data-id="${productId}"]`);
-      if (item) {
-        item.style.transition = 'opacity 0.3s, transform 0.3s';
-        item.style.opacity = '0';
-        item.style.transform = 'translateX(-20px)';
+      // Use fetch to remove item
+      fetch('/remove_from_cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ product_id: productId })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const item = document.querySelector(`.cart-item[data-id="${productId}"]`);
+            if (item) {
+              item.style.transition = 'opacity 0.3s, transform 0.3s';
+              item.style.opacity = '0';
+              item.style.transform = 'translateX(-20px)';
 
-        setTimeout(() => {
-          item.remove();
-          updateCartTotals();
-          checkEmptyCart();
-        }, 300);
-      }
+              setTimeout(() => {
+                item.remove();
+                updateCartTotals(); // This now needs to use data.subtotal if available, or recalc
+
+                // Update badge
+                if (window.ShopEase && window.ShopEase.updateCartBadge) {
+                  window.ShopEase.updateCartBadge(data.cart_count);
+                }
+
+                checkEmptyCart();
+              }, 300);
+            }
+          } else {
+            alert('Failed to remove item: ' + (data.message || 'Unknown error'));
+          }
+        })
+        .catch(err => {
+          console.error('Error removing item:', err);
+          alert('An error occurred while removing the item.');
+        });
     }
 
     function updateCartTotals() {

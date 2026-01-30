@@ -132,13 +132,13 @@
   }
 
   .action-card {
-    background: white;
+    background: var(--bg-card);
     border-radius: 12px;
     padding: 1.5rem;
     text-decoration: none;
-    color: #333;
+    color: var(--text-main);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     transition: all 0.3s ease;
     display: block;
   }
@@ -183,12 +183,12 @@
   .action-title {
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #1f2937;
+    color: var(--text-main);
   }
 
   .action-desc {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--text-muted);
     line-height: 1.4;
   }
 
@@ -224,11 +224,11 @@
 
   .orders-table {
     width: 100%;
-    background: white;
+    background: var(--bg-card);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     margin-bottom: 3rem;
   }
 
@@ -236,10 +236,10 @@
     display: grid;
     grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
     padding: 1rem 1.5rem;
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
+    background: var(--gray-100);
+    border-bottom: 2px solid var(--border-color);
     font-weight: 600;
-    color: #4b5563;
+    color: var(--text-muted);
     font-size: 0.875rem;
   }
 
@@ -247,13 +247,13 @@
     display: grid;
     grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
     align-items: center;
     transition: background-color 0.2s ease;
   }
 
   .order-row:hover {
-    background-color: #f9fafb;
+    background-color: var(--gray-100);
   }
 
   .order-row:last-child {
@@ -337,7 +337,7 @@
   .empty-state {
     text-align: center;
     padding: 3rem;
-    background: white;
+    background: var(--bg-card);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin-bottom: 2rem;
@@ -384,7 +384,7 @@
   }
 
   .bill-content {
-    background: white;
+    background: var(--bg-card);
     border-radius: 16px;
     width: 100%;
     max-width: 800px;
@@ -473,13 +473,13 @@
 
   .detail-column h4 {
     font-weight: 600;
-    color: #4b5563;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
   }
 
   .detail-column p {
-    color: #1f2937;
+    color: var(--text-main);
     margin: 0.25rem 0;
   }
 
@@ -490,18 +490,18 @@
   }
 
   .bill-table th {
-    background: #f9fafb;
+    background: var(--gray-100);
     padding: 1rem;
     text-align: left;
     font-weight: 600;
-    color: #4b5563;
-    border-bottom: 2px solid #e5e7eb;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border-color);
   }
 
   .bill-table td {
     padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    color: #4b5563;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-muted);
   }
 
   .bill-table tr:last-child td {
@@ -538,9 +538,9 @@
 
   .bill-footer {
     padding: 1.5rem;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--border-color);
     text-align: center;
-    color: #6b7280;
+    color: var(--text-muted);
     font-size: 0.875rem;
   }
 
@@ -582,31 +582,31 @@
   /* Claims Section */
   .claims-table {
     width: 100%;
-    background: white;
+    background: var(--bg-card);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     margin-top: 2rem;
   }
 
   .claims-table th {
     padding: 1rem;
     text-align: left;
-    background: #f9fafb;
+    background: var(--gray-100);
     font-weight: 600;
-    color: #4b5563;
-    border-bottom: 2px solid #e5e7eb;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border-color);
   }
 
   .claims-table td {
     padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    color: #4b5563;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-muted);
   }
 
   .claims-table tr:hover {
-    background: #f9fafb;
+    background: var(--gray-100);
   }
 
   .claims-table tr:last-child td {
@@ -776,6 +776,10 @@
             <span class="stat-label">Orders</span>
           </div>
           <div class="stat-item">
+            <span class="stat-value">₹{{ "{:,.0f}".format(total_spent) }}</span>
+            <span class="stat-label">Total Spent</span>
+          </div>
+          <div class="stat-item">
             <span class="stat-value">{{ claims|length }}</span>
             <span class="stat-label">Claims</span>
           </div>
@@ -787,6 +791,76 @@
       </div>
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script id="spending-data" type="application/json">
+    {
+      "labels": {{ chart_labels|tojson }},
+      "data": {{ chart_data|tojson }}
+    }
+  </script>
+
+  <!-- Spending Chart Section -->
+  <div class="chart-section"
+    style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;">
+    <h3 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">
+      <i class="fas fa-chart-bar" style="color: #667eea; margin-right: 0.5rem;"></i> Spending History
+    </h3>
+    <div style="height: 250px;">
+      <canvas id="spendingChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Parse data from hidden script tag
+      try {
+        const chartData = JSON.parse(document.getElementById('spending-data').textContent);
+
+        const ctx = document.getElementById('spendingChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: chartData.labels,
+            datasets: [{
+              label: 'Spending (₹)',
+              data: chartData.data,
+              backgroundColor: 'rgba(102, 126, 234, 0.6)',
+              borderColor: 'rgba(102, 126, 234, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  drawBorder: false
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Error loading chart data", e);
+      }
+    });
+  </script>
 
   <!-- Quick Actions -->
   <div class="quick-actions">
@@ -1088,6 +1162,14 @@
   {% endif %}
 </div>
 
+<script id="orders-data" type="application/json">
+    {{ orders|tojson }}
+  </script>
+
+<script id="claims-data" type="application/json">
+    {{ claims|tojson }}
+  </script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     // Get modal elements
@@ -1101,46 +1183,45 @@
     const warrantyReasonText = document.getElementById('warrantyReasonText');
 
     // Store order data for bill generation
-    const ordersData = {{ orders| tojson
-  }};
+    const ordersData = JSON.parse(document.getElementById('orders-data').textContent);
 
-  // Store claims data
-  const claimsData = {{ claims| tojson }};
+    // Store claims data
+    const claimsData = JSON.parse(document.getElementById('claims-data').textContent);
 
-  // Format all prices on page load
-  formatAllPrices();
+    // Format all prices on page load
+    formatAllPrices();
 
-  // Function to open bill modal
-  function openBillModal(orderId, productId, showWarrantyReason = false, warrantyReason = '') {
-    // Find the order and product
-    const order = ordersData.find(o => o.id == orderId);
-    const product = order?.products?.find(p => p.product_id == productId);
+    // Function to open bill modal
+    function openBillModal(orderId, productId, showWarrantyReason = false, warrantyReason = '') {
+      // Find the order and product
+      const order = ordersData.find(o => o.id == orderId);
+      const product = order?.products?.find(p => p.product_id == productId);
 
-    if (!order || !product) {
-      alert('Order or product not found!');
-      return;
-    }
+      if (!order || !product) {
+        alert('Order or product not found!');
+        return;
+      }
 
-    // Update modal content
-    document.getElementById('billOrderId').textContent = order.id;
-    document.getElementById('billOrderDate').textContent = order.date_time ?
-      new Date(order.date_time).toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : 'N/A';
+      // Update modal content
+      document.getElementById('billOrderId').textContent = order.id;
+      document.getElementById('billOrderDate').textContent = order.date_time ?
+        new Date(order.date_time).toLocaleDateString('en-IN', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : 'N/A';
 
-    // Clear previous items
-    const billItemsContainer = document.getElementById('billItems');
-    billItemsContainer.innerHTML = '';
+      // Clear previous items
+      const billItemsContainer = document.getElementById('billItems');
+      billItemsContainer.innerHTML = '';
 
-    // Add product to bill
-    const productPrice = parseFloat(product.unit_price) || 0;
-    const productQuantity = parseInt(product.quantity) || 1;
-    const productTotal = productPrice * productQuantity;
+      // Add product to bill
+      const productPrice = parseFloat(product.unit_price) || 0;
+      const productQuantity = parseInt(product.quantity) || 1;
+      const productTotal = productPrice * productQuantity;
 
-    const row = document.createElement('tr');
-    row.innerHTML = `
+      const row = document.createElement('tr');
+      row.innerHTML = `
         <td>
           <strong>${escapeHtml(product.name)}</strong>
           ${product.warranty_years ? `<br><small style="color: #10b981;">Warranty: ${product.warranty_years} year${product.warranty_years != 1 ? 's' : ''}</small>` : ''}
@@ -1149,44 +1230,44 @@
         <td>${productQuantity}</td>
         <td>₹${formatCurrency(productTotal)}</td>
       `;
-    billItemsContainer.appendChild(row);
+      billItemsContainer.appendChild(row);
 
-    // Update totals
-    document.getElementById('billSubtotal').textContent = `₹${formatCurrency(productTotal)}`;
-    document.getElementById('billTotal').textContent = `₹${formatCurrency(productTotal)}`;
+      // Update totals
+      document.getElementById('billSubtotal').textContent = `₹${formatCurrency(productTotal)}`;
+      document.getElementById('billTotal').textContent = `₹${formatCurrency(productTotal)}`;
 
-    // Show/hide warranty reason section
-    if (showWarrantyReason && warrantyReason) {
-      warrantyReasonSection.style.display = 'block';
-      warrantyReasonText.textContent = warrantyReason;
-    } else {
+      // Show/hide warranty reason section
+      if (showWarrantyReason && warrantyReason) {
+        warrantyReasonSection.style.display = 'block';
+        warrantyReasonText.textContent = warrantyReason;
+      } else {
+        warrantyReasonSection.style.display = 'none';
+      }
+
+      // Show modal
+      billModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Function to close bill modal
+    function closeBillModal() {
+      billModal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+      // Hide warranty reason section when closing
       warrantyReasonSection.style.display = 'none';
     }
 
-    // Show modal
-    billModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
+    // Function to print bill
+    function printBill() {
+      const printWindow = window.open('', '_blank');
+      const billContent = document.querySelector('.bill-content').cloneNode(true);
 
-  // Function to close bill modal
-  function closeBillModal() {
-    billModal.classList.remove('active');
-    document.body.style.overflow = 'auto';
-    // Hide warranty reason section when closing
-    warrantyReasonSection.style.display = 'none';
-  }
+      // Remove action buttons from print view
+      const actions = billContent.querySelector('.bill-actions');
+      if (actions) actions.remove();
 
-  // Function to print bill
-  function printBill() {
-    const printWindow = window.open('', '_blank');
-    const billContent = document.querySelector('.bill-content').cloneNode(true);
-
-    // Remove action buttons from print view
-    const actions = billContent.querySelector('.bill-actions');
-    if (actions) actions.remove();
-
-    // Add print styles
-    const styles = `
+      // Add print styles
+      const styles = `
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; padding: 20px; }
@@ -1204,7 +1285,7 @@
         </style>
       `;
 
-    printWindow.document.write(`
+      printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -1222,127 +1303,127 @@
         </body>
         </html>
       `);
-    printWindow.document.close();
-  }
-
-  // Function to format all prices on the page
-  function formatAllPrices() {
-    // Format prices in orders table
-    const priceCells = document.querySelectorAll('.price-cell');
-    priceCells.forEach(cell => {
-      const price = parseFloat(cell.dataset.price) || 0;
-      cell.textContent = '₹' + formatCurrency(price);
-    });
-
-    // Format order totals in JavaScript (if needed elsewhere)
-    const orderTotals = document.querySelectorAll('[data-order-total]');
-    orderTotals.forEach(el => {
-      const total = parseFloat(el.dataset.orderTotal) || 0;
-      if (el.textContent.includes('₹')) {
-        el.textContent = el.textContent.replace(/₹\d+(\.\d+)?/, '₹' + formatCurrency(total));
-      }
-    });
-  }
-
-  // Add event listeners for product bill viewing
-  viewBillLinks.forEach(link => {
-    link.addEventListener('click', function (e) {
-      e.preventDefault();
-      const orderId = this.dataset.orderId;
-      const productId = this.dataset.productId;
-      openBillModal(orderId, productId);
-    });
-  });
-
-  // Add event listeners for warranty reason viewing
-  viewReasonButtons.forEach(button => {
-    button.addEventListener('click', function (e) {
-      e.preventDefault();
-      const reason = this.dataset.reason;
-      const productName = this.dataset.product;
-      const orderId = this.dataset.order;
-
-      // Open bill modal with warranty reason
-      openBillModal(orderId, '', true, reason);
-
-      // Update modal title to show it's a warranty claim view
-      document.querySelector('.bill-header h2').textContent = 'Warranty Claim Details';
-
-      // Update company info to show product name
-      document.querySelector('.company-name').textContent = productName;
-      document.querySelector('.company-tagline').textContent = 'Warranty Claim Reason';
-    });
-  });
-
-  closeModalBtn.addEventListener('click', closeBillModal);
-  closeBillBtn.addEventListener('click', closeBillModal);
-  printBillBtn.addEventListener('click', printBill);
-
-  // Close modal when clicking outside
-  billModal.addEventListener('click', function (e) {
-    if (e.target === billModal) {
-      closeBillModal();
+      printWindow.document.close();
     }
-  });
 
-  // Close modal with Escape key
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && billModal.classList.contains('active')) {
-      closeBillModal();
-    }
-  });
+    // Function to format all prices on the page
+    function formatAllPrices() {
+      // Format prices in orders table
+      const priceCells = document.querySelectorAll('.price-cell');
+      priceCells.forEach(cell => {
+        const price = parseFloat(cell.dataset.price) || 0;
+        cell.textContent = '₹' + formatCurrency(price);
+      });
 
-  // Helper function to format currency
-  function formatCurrency(amount) {
-    const num = parseFloat(amount || 0);
-    if (isNaN(num)) return '0.00';
-
-    return num.toLocaleString('en-IN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  // Helper function to escape HTML
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // Add loading state to claim buttons
-  const claimButtons = document.querySelectorAll('.claim-btn:not(:disabled)');
-  claimButtons.forEach(button => {
-    button.addEventListener('click', function (e) {
-      if (!this.href) {
-        e.preventDefault();
-        return;
-      }
-
-      const originalText = this.innerHTML;
-      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-      this.disabled = true;
-
-      setTimeout(() => {
-        if (this.innerHTML.includes('fa-spinner')) {
-          this.innerHTML = originalText;
-          this.disabled = false;
+      // Format order totals in JavaScript (if needed elsewhere)
+      const orderTotals = document.querySelectorAll('[data-order-total]');
+      orderTotals.forEach(el => {
+        const total = parseFloat(el.dataset.orderTotal) || 0;
+        if (el.textContent.includes('₹')) {
+          el.textContent = el.textContent.replace(/₹\d+(\.\d+)?/, '₹' + formatCurrency(total));
         }
-      }, 3000);
-    });
-  });
+      });
+    }
 
-  // Add hover effect to product names
-  const productLinks = document.querySelectorAll('.product-name-link');
-  productLinks.forEach(link => {
-    link.addEventListener('mouseenter', function () {
-      this.style.textDecoration = 'underline';
+    // Add event listeners for product bill viewing
+    viewBillLinks.forEach(link => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const orderId = this.dataset.orderId;
+        const productId = this.dataset.productId;
+        openBillModal(orderId, productId);
+      });
     });
 
-    link.addEventListener('mouseleave', function () {
-      this.style.textDecoration = 'none';
+    // Add event listeners for warranty reason viewing
+    viewReasonButtons.forEach(button => {
+      button.addEventListener('click', function (e) {
+        e.preventDefault();
+        const reason = this.dataset.reason;
+        const productName = this.dataset.product;
+        const orderId = this.dataset.order;
+
+        // Open bill modal with warranty reason
+        openBillModal(orderId, '', true, reason);
+
+        // Update modal title to show it's a warranty claim view
+        document.querySelector('.bill-header h2').textContent = 'Warranty Claim Details';
+
+        // Update company info to show product name
+        document.querySelector('.company-name').textContent = productName;
+        document.querySelector('.company-tagline').textContent = 'Warranty Claim Reason';
+      });
     });
-  });
+
+    closeModalBtn.addEventListener('click', closeBillModal);
+    closeBillBtn.addEventListener('click', closeBillModal);
+    printBillBtn.addEventListener('click', printBill);
+
+    // Close modal when clicking outside
+    billModal.addEventListener('click', function (e) {
+      if (e.target === billModal) {
+        closeBillModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && billModal.classList.contains('active')) {
+        closeBillModal();
+      }
+    });
+
+    // Helper function to format currency
+    function formatCurrency(amount) {
+      const num = parseFloat(amount || 0);
+      if (isNaN(num)) return '0.00';
+
+      return num.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Add loading state to claim buttons
+    const claimButtons = document.querySelectorAll('.claim-btn:not(:disabled)');
+    claimButtons.forEach(button => {
+      button.addEventListener('click', function (e) {
+        if (!this.href) {
+          e.preventDefault();
+          return;
+        }
+
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        this.disabled = true;
+
+        setTimeout(() => {
+          if (this.innerHTML.includes('fa-spinner')) {
+            this.innerHTML = originalText;
+            this.disabled = false;
+          }
+        }, 3000);
+      });
+    });
+
+    // Add hover effect to product names
+    const productLinks = document.querySelectorAll('.product-name-link');
+    productLinks.forEach(link => {
+      link.addEventListener('mouseenter', function () {
+        this.style.textDecoration = 'underline';
+      });
+
+      link.addEventListener('mouseleave', function () {
+        this.style.textDecoration = 'none';
+      });
+    });
   });
 </script>
 {% endblock %}
